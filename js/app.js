@@ -265,7 +265,11 @@
 
   function initIntro(onComplete) {
     if (window.THREE) {
-      initThreeIntro(onComplete);
+      try {
+        initThreeIntro(onComplete);
+      } catch (e) {
+        initCanvas2DIntro(onComplete);
+      }
     } else {
       initCanvas2DIntro(onComplete);
     }

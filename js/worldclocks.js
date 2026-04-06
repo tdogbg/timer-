@@ -265,7 +265,8 @@
 
     // Reset animation so new items join the flow cleanly
     ticker.style.animation = 'none';
-    // Force reflow
+    // Force reflow — reading offsetWidth triggers a synchronous layout,
+    // which is required to restart the CSS animation from the beginning.
     void ticker.offsetWidth;
     ticker.style.animation = '';
   }
