@@ -54,7 +54,7 @@
       card.innerHTML = `
         <div class="clock-region">${region}</div>
         <div class="clock-city">${city}</div>
-        <div class="clock-time" id="wc-time-${i}">--:--:--</div>
+        <div class="clock-time" id="wc-time-${i}">00:00:00</div>
         <div class="clock-tz" id="wc-tz-${i}">${getTzAbbr(tz)}</div>
         <div class="clock-date-small" id="wc-date-${i}"></div>
       `;

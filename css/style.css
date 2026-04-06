@@ -262,7 +262,7 @@ button { font-family: inherit; cursor: none; }
 
 .time-digits {
   font-family: var(--font-mono);
-  font-size: clamp(3.5rem, 14vw, 7.5rem);
+  font-size: clamp(3.5rem, 14vw, 6rem);
   font-weight: 700;
   color: var(--clr-white);
   letter-spacing: 0.04em;

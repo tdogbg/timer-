@@ -141,7 +141,7 @@
   /* ── Timer Mode ── */
   function startTimer() {
     if (state.remainingSeconds <= 0) {
-      const h = parseInt(els.inputHours?.value  || 0, 10) || 0;
+      const h = parseInt(els.inputHours?.value || 0, 10) || 0;
       const m = parseInt(els.inputMinutes?.value || 0, 10) || 0;
       const s = parseInt(els.inputSeconds?.value || 0, 10) || 0;
       state.totalSeconds = h * 3600 + m * 60 + s;
@@ -175,7 +175,7 @@
 
   function resetTimer() {
     pauseTimer();
-    const h = parseInt(els.inputHours?.value  || 0, 10) || 0;
+    const h = parseInt(els.inputHours?.value || 0, 10) || 0;
     const m = parseInt(els.inputMinutes?.value || 0, 10) || 0;
     const s = parseInt(els.inputSeconds?.value || 0, 10) || 0;
     state.totalSeconds = h * 3600 + m * 60 + s;
@@ -204,7 +204,7 @@
 
   function onTimerComplete() {
     playCompletionSound();
-    sendNotification('Timer Complete', "Time's up!");
+    sendNotification("Time's Up!", "Your timer has completed.");
     showCompletionBanner();
     if (els.liveRegion) els.liveRegion.textContent = "Timer complete. Time's up!";
     window.dispatchEvent(new CustomEvent('timerComplete'));
@@ -479,7 +479,7 @@
     [els.inputHours, els.inputMinutes, els.inputSeconds].forEach(input => {
       input?.addEventListener('input', () => {
         if (!state.running) {
-          const h = parseInt(els.inputHours?.value  || 0, 10) || 0;
+          const h = parseInt(els.inputHours?.value || 0, 10) || 0;
           const m = parseInt(els.inputMinutes?.value || 0, 10) || 0;
           const s = parseInt(els.inputSeconds?.value || 0, 10) || 0;
           state.totalSeconds = h * 3600 + m * 60 + s;

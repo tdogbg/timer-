@@ -86,7 +86,7 @@
     window.addEventListener('resize', resize);
 
     // Particles
-    const PARTICLE_COUNT = window.innerWidth < 600 ? 600 : 1400;
+    const PARTICLE_COUNT = window.innerWidth < 600 ? 300 : 800;
     const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
       x: Math.random() * W,
       y: Math.random() * H,
@@ -223,7 +223,7 @@
     const container = document.getElementById('smokeTrail');
     if (!container) return;
 
-    const POOL_SIZE = 30;
+    const POOL_SIZE = 18;
     const pool = [];
     let poolIdx = 0;
 
