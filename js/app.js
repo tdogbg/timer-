@@ -21,6 +21,8 @@
     pomShort: 5,
     pomLong: 15,
     pomCycles: 4,
+    lightMode: false,
+    bgStyle: 'full',
   };
 
   function loadSettings() {
@@ -50,6 +52,7 @@
       pomShortBreak:          'pomShort',
       pomLongBreak:           'pomLong',
       pomCyclesBeforeLong:    'pomCycles',
+      lightModeToggle:        'lightMode',
     };
     Object.entries(ids).forEach(([elId, key]) => {
       const el = document.getElementById(elId);
@@ -57,6 +60,8 @@
       if (el.type === 'checkbox') { el.checked = !!settings[key]; }
       else { el.value = settings[key] ?? ''; }
     });
+    const bgSel = document.getElementById('bgStyleSelect');
+    if (bgSel) bgSel.value = settings.bgStyle || 'full';
   }
 
   function readSettingsFromUI() {
@@ -69,6 +74,8 @@
       pomShort:  parseInt(document.getElementById('pomShortBreak')?.value,   10)   || 5,
       pomLong:   parseInt(document.getElementById('pomLongBreak')?.value,    10)   || 15,
       pomCycles: parseInt(document.getElementById('pomCyclesBeforeLong')?.value, 10) || 4,
+      lightMode: !!document.getElementById('lightModeToggle')?.checked,
+      bgStyle:   document.getElementById('bgStyleSelect')?.value || 'full',
     };
   }
 
@@ -402,6 +409,138 @@
   }
 
   /* =========================================================
+     SAND ANIMATION
+     ========================================================= */
+  function initSandAnimation() {
+    const canvas = document.getElementById('sandCanvas');
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+    let W, H, rafId, active = true;
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const GRAIN_COUNT = window.innerWidth < 600 ? 180 : 380;
+    const grains = Array.from({ length: GRAIN_COUNT }, () => ({
+      x:  Math.random() * window.innerWidth,
+      y:  Math.random() * window.innerHeight,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: 0.4 + Math.random() * 1.2,
+      r:  0.5 + Math.random() * 1.2,
+      op: 0.08 + Math.random() * 0.28,
+      hue: 32 + Math.random() * 24,
+    }));
+
+    function draw() {
+      if (!active) return;
+      ctx.clearRect(0, 0, W, H);
+      grains.forEach(g => {
+        g.x  += g.vx;
+        g.y  += g.vy;
+        g.vx += (Math.random() - 0.5) * 0.018;
+        g.vx  = Math.max(-0.7, Math.min(0.7, g.vx));
+        if (g.y > H + 4) { g.y = -4; g.x = Math.random() * W; g.vx = (Math.random() - 0.5) * 0.35; }
+        if (g.x < 0) g.x = W;
+        if (g.x > W) g.x = 0;
+        ctx.beginPath();
+        ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${g.hue},55%,65%,${g.op})`;
+        ctx.fill();
+      });
+      rafId = requestAnimationFrame(draw);
+    }
+
+    draw();
+
+    return {
+      stop:  () => { active = false; cancelAnimationFrame(rafId); ctx.clearRect(0, 0, W, H); },
+      start: () => { if (!active) { active = true; draw(); } },
+      setVisible: (v) => { canvas.style.opacity = v ? '' : '0'; canvas.style.pointerEvents = 'none'; },
+    };
+  }
+
+  /* =========================================================
+     BACKGROUND STYLE MANAGER
+     ========================================================= */
+  let sandController = null;
+
+  function applyBgStyle(style) {
+    const field      = document.getElementById('particleField');
+    const sandCanvas = document.getElementById('sandCanvas');
+    const orb1 = document.querySelector('.bg-orb-1');
+    const orb2 = document.querySelector('.bg-orb-2');
+    const orb3 = document.querySelector('.bg-orb-3');
+
+    const showParticles = style === 'full' || style === 'orbs';
+    const showSand      = style === 'full' || style === 'sand';
+    const showOrbs      = style !== 'minimal';
+
+    if (field)      field.style.display      = showParticles ? '' : 'none';
+    if (sandCanvas) sandCanvas.style.opacity  = showSand ? '' : '0';
+    if (orb1)       orb1.style.display        = showOrbs ? '' : 'none';
+    if (orb2)       orb2.style.display        = showOrbs ? '' : 'none';
+    if (orb3)       orb3.style.display        = showOrbs ? '' : 'none';
+
+    if (sandController) {
+      if (showSand) sandController.start();
+      else          sandController.stop();
+    }
+  }
+
+  /* =========================================================
+     LIGHT / DARK MODE TOGGLE
+     ========================================================= */
+  function initThemeToggle(settings) {
+    const btn      = document.getElementById('themeToggle');
+    const sunIcon  = document.getElementById('themeIconSun');
+    const moonIcon = document.getElementById('themeIconMoon');
+    const toggle   = document.getElementById('lightModeToggle');
+    let   isLight  = !!settings.lightMode;
+
+    function applyTheme(light) {
+      document.body.classList.toggle('light-mode', light);
+      if (sunIcon)  sunIcon.style.display  = light ? 'none' : '';
+      if (moonIcon) moonIcon.style.display = light ? '' : 'none';
+      if (toggle) toggle.checked = light;
+      window.timerSettings = { ...window.timerSettings, lightMode: light };
+      saveSettings(window.timerSettings);
+    }
+
+    btn?.addEventListener('click', () => { isLight = !isLight; applyTheme(isLight); });
+    toggle?.addEventListener('change', e => { isLight = e.target.checked; applyTheme(isLight); });
+    applyTheme(isLight);
+  }
+
+  /* =========================================================
+     FULLSCREEN TOGGLE
+     ========================================================= */
+  function initFullscreenToggle() {
+    const btn      = document.getElementById('fullscreenToggle');
+    const expand   = document.getElementById('fsExpand');
+    const collapse = document.getElementById('fsCollapse');
+
+    function updateIcons() {
+      const fs = !!document.fullscreenElement;
+      if (expand)   expand.style.display   = fs ? 'none' : '';
+      if (collapse) collapse.style.display = fs ? '' : 'none';
+    }
+
+    btn?.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+    document.addEventListener('fullscreenchange', updateIcons);
+    updateIcons();
+  }
+
+  /* =========================================================
      SETTINGS PANEL
      ========================================================= */
   function initSettingsPanel(settings) {
@@ -433,6 +572,14 @@
       window.timerSettings = current;
       closePanel();
       window.SpotifyController?.login();
+    });
+
+    const bgSel = document.getElementById('bgStyleSelect');
+    bgSel?.addEventListener('change', () => {
+      const style = bgSel.value;
+      applyBgStyle(style);
+      window.timerSettings = { ...window.timerSettings, bgStyle: style };
+      saveSettings(window.timerSettings);
     });
 
     notifToggle?.addEventListener('change', e => {
@@ -569,9 +716,14 @@
       window.TimerController?.init();
       window.WorldClocks?.init();
       window.SpotifyController?.init();
+      window.GamesController?.init();
 
       initSettingsPanel(settings);
       initSoundToggle(settings);
+      initThemeToggle(settings);
+      initFullscreenToggle();
+      sandController = initSandAnimation();
+      applyBgStyle(settings.bgStyle || 'full');
       initParticles();
       initSmokeCursor();
       initAnimations();

@@ -29,6 +29,7 @@
     <div class="bg-orb bg-orb-1"></div>
     <div class="bg-orb bg-orb-2"></div>
     <div class="bg-orb bg-orb-3"></div>
+    <canvas id="sandCanvas" aria-hidden="true"></canvas>
     <div class="particle-field" id="particleField"></div>
   </div>
 
@@ -57,6 +58,14 @@
         </button>
       </nav>
       <div class="header-actions">
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle Light/Dark Mode">
+          <svg id="themeIconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button class="icon-btn" id="fullscreenToggle" aria-label="Toggle fullscreen" title="Toggle Fullscreen">
+          <svg id="fsExpand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          <svg id="fsCollapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="display:none"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+        </button>
         <button class="icon-btn" id="settingsToggle" aria-label="Settings" title="Settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
         </button>
@@ -251,6 +260,107 @@
       </div>
     </section>
 
+    <!-- ===================== MINI GAMES ===================== -->
+    <section class="games-section" id="gamesSection">
+      <div class="games-section-header">
+        <h2 class="games-section-title">MINI GAMES</h2>
+        <p class="games-section-sub">Challenge yourself during breaks</p>
+      </div>
+      <div class="games-grid">
+
+        <!-- Reaction Time -->
+        <div class="game-card glass" id="reactionCard">
+          <div class="game-card-header">
+            <div class="game-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="game-meta">
+              <div class="game-title">Reaction Time</div>
+              <div class="game-subtitle">Click when you see green</div>
+            </div>
+          </div>
+          <div class="game-body">
+            <div class="reaction-zone" id="reactionZone" data-state="idle">
+              <span id="reactionMessage">Press Start</span>
+            </div>
+            <div class="reaction-ms" id="reactionMs"></div>
+          </div>
+          <div class="game-footer">
+            <button class="game-start-btn" id="reactionStartBtn">Start</button>
+            <div class="game-best" id="reactionBest"></div>
+          </div>
+        </div>
+
+        <!-- Speed Typing -->
+        <div class="game-card glass" id="typingCard">
+          <div class="game-card-header">
+            <div class="game-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            </div>
+            <div class="game-meta">
+              <div class="game-title">Speed Typing</div>
+              <div class="game-subtitle">Type as fast as you can</div>
+            </div>
+          </div>
+          <div class="game-body">
+            <div class="typing-prompt-text" id="typingPromptText">Press Start to begin</div>
+            <input type="text" class="typing-input-field" id="typingInputField" placeholder="Start typing..." disabled autocomplete="off" spellcheck="false" />
+            <div class="typing-wpm" id="typingWpm"></div>
+          </div>
+          <div class="game-footer">
+            <button class="game-start-btn" id="typingStartBtn">Start</button>
+            <div class="game-timer-display" id="typingTimerDisplay"></div>
+          </div>
+        </div>
+
+        <!-- Memory Match -->
+        <div class="game-card glass" id="memoryCard">
+          <div class="game-card-header">
+            <div class="game-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="7" height="7" rx="1"/><rect x="15" y="3" width="7" height="7" rx="1"/><rect x="15" y="14" width="7" height="7" rx="1"/><rect x="2" y="14" width="7" height="7" rx="1"/></svg>
+            </div>
+            <div class="game-meta">
+              <div class="game-title">Memory Match</div>
+              <div class="game-subtitle">Find all matching pairs</div>
+            </div>
+          </div>
+          <div class="game-body">
+            <div class="memory-board" id="memoryBoard">
+              <div class="memory-idle-msg">Press Start to play</div>
+            </div>
+            <div class="memory-moves" id="memoryMoves"></div>
+          </div>
+          <div class="game-footer">
+            <button class="game-start-btn" id="memoryStartBtn">Start</button>
+            <div class="game-score" id="memoryScore"></div>
+          </div>
+        </div>
+
+        <!-- Quick Trivia -->
+        <div class="game-card glass" id="triviaCard">
+          <div class="game-card-header">
+            <div class="game-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="game-meta">
+              <div class="game-title">Quick Trivia</div>
+              <div class="game-subtitle">Test your knowledge</div>
+            </div>
+          </div>
+          <div class="game-body">
+            <div class="trivia-question-text" id="triviaQuestionText">Press Start to begin</div>
+            <div class="trivia-answers" id="triviaAnswers"></div>
+            <div class="trivia-feedback" id="triviaFeedback"></div>
+          </div>
+          <div class="game-footer">
+            <button class="game-start-btn" id="triviaStartBtn">Start</button>
+            <div class="trivia-progress-display" id="triviaProgressDisplay"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
     <!-- ===================== FOOTER ===================== -->
     <footer class="site-footer glass">
       <div class="footer-inner">
@@ -273,6 +383,25 @@
         </button>
       </div>
       <div class="panel-body">
+        <section class="setting-group">
+          <h3>Appearance</h3>
+          <label class="setting-row toggle-row">
+            Light Mode
+            <div class="toggle-switch">
+              <input type="checkbox" id="lightModeToggle" />
+              <span class="toggle-slider"></span>
+            </div>
+          </label>
+          <label class="setting-row">
+            Background
+            <select id="bgStyleSelect" class="setting-select">
+              <option value="full">Full (Sand + Orbs + Particles)</option>
+              <option value="sand">Sand + Orbs</option>
+              <option value="orbs">Orbs + Particles</option>
+              <option value="minimal">Minimal</option>
+            </select>
+          </label>
+        </section>
         <section class="setting-group">
           <h3>Pomodoro Durations</h3>
           <label class="setting-row">
@@ -344,6 +473,7 @@
   <script src="js/timer.js"></script>
   <script src="js/spotify.js"></script>
   <script src="js/worldclocks.js"></script>
+  <script src="js/games.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
