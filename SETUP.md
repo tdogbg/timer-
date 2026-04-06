@@ -8,7 +8,8 @@ No build step required — just open `index.html` in a browser or serve the fold
 ## 🚀 Quick Start (Local)
 
 ```bash
-# Clone / enter repo
+# Clone / enter repo (repository name is timer-)
+git clone https://github.com/tdogbg/timer-.git
 cd timer-
 
 # Serve with any static server (Python example):

@@ -432,13 +432,6 @@
 
   /* ── Init ── */
   function init() {
-    // Grab elements
-    Object.keys(els).forEach(k => {
-      els[k] = document.getElementById(
-        k.replace(/([A-Z])/g, m => m.toLowerCase()).replace(/(.)([A-Z])/g, '$1$2')
-      ) || document.getElementById(k);
-    });
-
     // Explicit IDs
     els.timerDigits   = document.getElementById('timerDigits');
     els.clockDigits   = document.getElementById('clockDigits');
