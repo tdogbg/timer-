@@ -1058,4 +1058,422 @@ button { font-family: inherit; cursor: pointer; }
   .worldclocks-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
   .completion-inner { padding: 40px 32px; }
   .completion-text { font-size: 2rem; }
+  .games-grid { grid-template-columns: 1fr; }
+  .header-actions { gap: 4px; }
 }
+
+/* =========================================================
+   LIGHT MODE
+   ========================================================= */
+body.light-mode {
+  --clr-bg:        #f0f2f8;
+  --clr-surface:   rgba(0,0,0,0.03);
+  --clr-glass:     rgba(255,255,255,0.68);
+  --clr-glass-hov: rgba(255,255,255,0.88);
+  --clr-border:    rgba(0,0,0,0.10);
+  --clr-text:      #1a1c28;
+  --clr-text-dim:  rgba(26,28,40,0.55);
+  --clr-white:     #1a1c28;
+  --shadow-glow:   0 0 60px rgba(108,99,255,0.18);
+}
+body.light-mode .bg-canvas {
+  background: var(--clr-bg);
+}
+body.light-mode .bg-orb {
+  opacity: 0.12;
+}
+body.light-mode .clock-ticker-section {
+  background: rgba(240,242,248,0.88);
+}
+body.light-mode .tz-search-results {
+  background: rgba(240,242,248,0.97);
+}
+body.light-mode .panel-header {
+  background: rgba(240,242,248,0.92);
+}
+body.light-mode .site-header {
+  background: rgba(240,242,248,0.88);
+  border-color: rgba(0,0,0,0.08);
+}
+body.light-mode .time-digits {
+  color: #1a1c28;
+  text-shadow: 0 0 40px rgba(108,99,255,0.25), 0 0 80px rgba(108,99,255,0.08);
+}
+body.light-mode .clock-time {
+  color: #1a1c28;
+  text-shadow: 0 0 20px rgba(108,99,255,0.2);
+}
+body.light-mode #sandCanvas { opacity: 0.25; }
+
+/* =========================================================
+   SAND CANVAS
+   ========================================================= */
+#sandCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.55;
+  transition: opacity 0.6s ease;
+}
+#sandCanvas.hidden { opacity: 0 !important; }
+
+/* =========================================================
+   SETTING SELECT
+   ========================================================= */
+.setting-select {
+  padding: 7px 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  color: var(--clr-text);
+  font-size: 0.88rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(232,234,240,0.5)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+.setting-select:focus {
+  outline: none;
+  border-color: var(--clr-accent);
+  background-color: rgba(108,99,255,0.1);
+}
+body.light-mode .setting-select {
+  background-color: rgba(0,0,0,0.05);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(26,28,40,0.45)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* =========================================================
+   MINI GAMES SECTION
+   ========================================================= */
+.games-section {
+  position: relative; z-index: 1;
+  padding: 60px 2rem 80px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+.games-section-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+.games-section-title {
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+.games-section-sub {
+  font-size: 0.88rem;
+  color: var(--clr-text-dim);
+  letter-spacing: 0.06em;
+}
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+@media (max-width: 900px) {
+  .games-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Game Card ── */
+.game-card {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition);
+}
+.game-card:hover {
+  border-color: rgba(108,99,255,0.3);
+  box-shadow: 0 12px 40px rgba(108,99,255,0.12);
+  transform: translateY(-2px);
+}
+.game-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--clr-border);
+}
+.game-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(108,99,255,0.2), rgba(255,101,132,0.1));
+  border: 1px solid rgba(108,99,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.game-icon svg {
+  width: 20px; height: 20px;
+  stroke: var(--clr-accent);
+}
+.game-meta { display: flex; flex-direction: column; gap: 3px; }
+.game-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--clr-text);
+  letter-spacing: 0.03em;
+}
+.game-subtitle {
+  font-size: 0.75rem;
+  color: var(--clr-text-dim);
+  letter-spacing: 0.04em;
+}
+.game-body {
+  flex: 1;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 140px;
+}
+.game-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--clr-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.game-start-btn {
+  padding: 8px 22px;
+  border: none;
+  border-radius: 100px;
+  background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: var(--transition);
+}
+.game-start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 24px rgba(108,99,255,0.4);
+}
+.game-start-btn:active { transform: scale(0.96); }
+.game-best, .game-score, .game-timer-display, .trivia-progress-display {
+  font-size: 0.78rem;
+  color: var(--clr-text-dim);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+/* ── Reaction Game ── */
+.reaction-zone {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--clr-border);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--clr-text-dim);
+  letter-spacing: 0.08em;
+}
+.reaction-zone[data-state="wait"] {
+  background: rgba(255,101,132,0.1);
+  border-color: rgba(255,101,132,0.3);
+  color: var(--clr-accent2);
+}
+.reaction-zone[data-state="go"] {
+  background: rgba(67,233,123,0.15);
+  border-color: rgba(67,233,123,0.5);
+  color: #43e97b;
+  cursor: pointer;
+  animation: reactionPulse 0.5s ease-out;
+}
+.reaction-zone[data-state="too-early"] {
+  background: rgba(255,101,132,0.15);
+  border-color: rgba(255,101,132,0.5);
+  color: var(--clr-accent2);
+}
+@keyframes reactionPulse {
+  from { box-shadow: 0 0 0 0 rgba(67,233,123,0.5); }
+  to   { box-shadow: 0 0 0 20px rgba(67,233,123,0); }
+}
+.reaction-ms {
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--clr-accent3);
+  letter-spacing: 0.05em;
+  min-height: 1.8rem;
+}
+
+/* ── Speed Typing Game ── */
+.typing-prompt-text {
+  font-size: 0.9rem;
+  color: var(--clr-text);
+  line-height: 1.6;
+  padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  min-height: 60px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+}
+.typing-input-field {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  color: var(--clr-text);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  transition: var(--transition);
+  resize: none;
+}
+.typing-input-field:focus {
+  outline: none;
+  border-color: var(--clr-accent);
+  background: rgba(108,99,255,0.08);
+}
+.typing-input-field:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.typing-wpm {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--clr-accent);
+  text-align: center;
+  letter-spacing: 0.05em;
+  min-height: 1.6rem;
+}
+
+/* ── Memory Game ── */
+.memory-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  min-height: 100px;
+}
+.memory-idle-msg {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--clr-text-dim);
+  font-style: italic;
+  min-height: 80px;
+}
+.memory-card {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--clr-border);
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: transform 0.3s ease, background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+}
+.memory-card:hover:not(.flipped):not(.matched) {
+  border-color: rgba(108,99,255,0.4);
+  background: rgba(108,99,255,0.1);
+  transform: scale(1.05);
+}
+.memory-card.flipped, .memory-card.matched {
+  border-color: transparent;
+  cursor: default;
+}
+.memory-card.matched {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+.memory-card-inner {
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.memory-moves {
+  font-size: 0.78rem;
+  color: var(--clr-text-dim);
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+/* ── Trivia Game ── */
+.trivia-question-text {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--clr-text);
+  line-height: 1.55;
+  padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  min-height: 60px;
+}
+.trivia-answers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.trivia-answer-btn {
+  padding: 8px 12px;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.05);
+  color: var(--clr-text-dim);
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-align: left;
+  transition: var(--transition);
+  cursor: pointer;
+  line-height: 1.3;
+}
+.trivia-answer-btn:hover:not(:disabled) {
+  background: rgba(108,99,255,0.12);
+  border-color: rgba(108,99,255,0.35);
+  color: var(--clr-text);
+}
+.trivia-answer-btn.correct {
+  background: rgba(67,233,123,0.15);
+  border-color: rgba(67,233,123,0.5);
+  color: #43e97b;
+  pointer-events: none;
+}
+.trivia-answer-btn.wrong {
+  background: rgba(255,101,132,0.15);
+  border-color: rgba(255,101,132,0.4);
+  color: var(--clr-accent2);
+  pointer-events: none;
+}
+.trivia-answer-btn:disabled { cursor: default; }
+.trivia-feedback {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: center;
+  min-height: 1.3rem;
+  color: var(--clr-text-dim);
+}
+.trivia-feedback.correct { color: #43e97b; }
+.trivia-feedback.wrong   { color: var(--clr-accent2); }
