@@ -183,8 +183,8 @@
 
     const PARTICLE_COUNT = window.innerWidth < 600 ? 300 : 800;
     const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * window.innerHeight,
+      x: Math.random() * W,
+      y: Math.random() * H,
       vx: (Math.random() - 0.5) * 0.4,
       vy: (Math.random() - 0.5) * 0.4,
       r: 0.5 + Math.random() * 1.5,
@@ -200,9 +200,9 @@
     }
 
     const shapeList = [
-      { cx: window.innerWidth * 0.5,  cy: window.innerHeight * 0.5,  size: 80, angle: 0,   speed: 0.008 },
-      { cx: window.innerWidth * 0.25, cy: window.innerHeight * 0.4,  size: 45, angle: 0.5, speed: 0.012 },
-      { cx: window.innerWidth * 0.75, cy: window.innerHeight * 0.55, size: 55, angle: 1.0, speed: 0.009 },
+      { cx: W * 0.5,  cy: H * 0.5,  size: 80, angle: 0,   speed: 0.008 },
+      { cx: W * 0.25, cy: H * 0.4,  size: 45, angle: 0.5, speed: 0.012 },
+      { cx: W * 0.75, cy: H * 0.55, size: 55, angle: 1.0, speed: 0.009 },
     ];
 
     let startTime = null;
