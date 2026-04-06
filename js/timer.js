@@ -1,11 +1,10 @@
 /**
  * js/timer.js — Timer, Stop Clock, Pomodoro logic
  * Exports: TimerController (attached to window)
+ * Progress uses horizontal bar (no SVG ring).
  */
 (function () {
   'use strict';
-
-  const RING_CIRCUMFERENCE = 2 * Math.PI * 130; // 816.81
 
   /* ── Utility ── */
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -55,16 +54,11 @@
     });
   }
 
-  function playTickSound() {
-    if (!window.timerSettings?.soundEnabled) return;
-    playBeep(880, 0.05, 'square', 0.08);
-  }
-
   /* ── Browser Notifications ── */
   function sendNotification(title, body) {
     if (!window.timerSettings?.notificationsEnabled) return;
     if (Notification.permission === 'granted') {
-      new Notification(title, { body, icon: '⏱' });
+      new Notification(title, { body });
     }
   }
 
@@ -76,10 +70,15 @@
     pomDigits:    null,
     pomPhaseBadge: null,
     pomCycleCount: null,
-    ringProgress:  null,
+    // Progress fills (horizontal bars replacing ring)
+    timerProgressFill: null,
+    clockProgressFill: null,
+    pomProgressFill:   null,
     btnPlay:  null,
     btnReset: null,
     btnStop:  null,
+    playIcon: null,
+    pauseIcon: null,
     timerInputs: null,
     inputHours:  null,
     inputMinutes: null,
@@ -89,6 +88,7 @@
     displayPomodoro: null,
     completionBanner: null,
     liveRegion: null,
+    timerRingWrap: null,
   };
 
   /* ── State ── */
@@ -117,20 +117,31 @@
     cyclesBeforeLong: 4,
   };
 
-  /* ── Ring helpers ── */
-  function setRingProgress(fraction) {
-    if (!els.ringProgress) return;
-    const offset = RING_CIRCUMFERENCE * (1 - Math.max(0, Math.min(1, fraction)));
-    els.ringProgress.style.strokeDashoffset = offset;
+  /* ── Progress bar helpers ── */
+  function setProgressFill(fillEl, fraction) {
+    if (!fillEl) return;
+    const pct = Math.max(0, Math.min(1, fraction)) * 100;
+    fillEl.style.width = `${pct}%`;
   }
 
-  function resetRing() { setRingProgress(1); }
+  function resetProgress() {
+    setProgressFill(els.timerProgressFill, 1);
+    setProgressFill(els.clockProgressFill, 1);
+    setProgressFill(els.pomProgressFill, 1);
+  }
+
+  /* ── Kept for backward compat (used in app.js ring glow listener) ── */
+  function setRingProgress(fraction) {
+    if (state.mode === 'timer')    setProgressFill(els.timerProgressFill, fraction);
+    if (state.mode === 'stopclock') setProgressFill(els.clockProgressFill, fraction);
+    if (state.mode === 'pomodoro') setProgressFill(els.pomProgressFill, fraction);
+  }
+  function resetRing() { resetProgress(); }
 
   /* ── Timer Mode ── */
   function startTimer() {
     if (state.remainingSeconds <= 0) {
-      // Re-read inputs
-      const h = parseInt(els.inputHours?.value || 0, 10) || 0;
+      const h = parseInt(els.inputHours?.value  || 0, 10) || 0;
       const m = parseInt(els.inputMinutes?.value || 0, 10) || 0;
       const s = parseInt(els.inputSeconds?.value || 0, 10) || 0;
       state.totalSeconds = h * 3600 + m * 60 + s;
@@ -140,7 +151,8 @@
     if (state.timerInterval) clearInterval(state.timerInterval);
     state.running = true;
     updateTimerDisplay();
-    document.getElementById('timerRingWrap')?.classList.add('timer-active');
+    els.timerRingWrap?.classList.add('timer-active');
+    els.timerProgressFill?.classList.add('active');
     state.timerInterval = setInterval(timerTick, 1000);
     updatePlayBtn();
   }
@@ -148,7 +160,8 @@
   function pauseTimer() {
     if (state.timerInterval) clearInterval(state.timerInterval);
     state.running = false;
-    document.getElementById('timerRingWrap')?.classList.remove('timer-active');
+    els.timerRingWrap?.classList.remove('timer-active');
+    els.timerProgressFill?.classList.remove('active');
     updatePlayBtn();
   }
 
@@ -156,18 +169,18 @@
     pauseTimer();
     state.remainingSeconds = 0;
     state.totalSeconds = 0;
-    resetRing();
+    resetProgress();
     updateTimerDisplay();
   }
 
   function resetTimer() {
     pauseTimer();
-    const h = parseInt(els.inputHours?.value || 0, 10) || 0;
+    const h = parseInt(els.inputHours?.value  || 0, 10) || 0;
     const m = parseInt(els.inputMinutes?.value || 0, 10) || 0;
     const s = parseInt(els.inputSeconds?.value || 0, 10) || 0;
     state.totalSeconds = h * 3600 + m * 60 + s;
     state.remainingSeconds = state.totalSeconds;
-    resetRing();
+    resetProgress();
     updateTimerDisplay();
   }
 
@@ -176,7 +189,7 @@
       state.remainingSeconds--;
       updateTimerDisplay();
       const fraction = state.totalSeconds > 0 ? state.remainingSeconds / state.totalSeconds : 0;
-      setRingProgress(fraction);
+      setProgressFill(els.timerProgressFill, fraction);
     } else {
       pauseTimer();
       onTimerComplete();
@@ -191,11 +204,9 @@
 
   function onTimerComplete() {
     playCompletionSound();
-    sendNotification('Timer Complete!', "Time's up!");
+    sendNotification('Timer Complete', "Time's up!");
     showCompletionBanner();
-    // Announce to screen readers
-    if (els.liveRegion) els.liveRegion.textContent = "Timer complete! Time's up!";
-    // Notify Spotify integration
+    if (els.liveRegion) els.liveRegion.textContent = "Timer complete. Time's up!";
     window.dispatchEvent(new CustomEvent('timerComplete'));
   }
 
@@ -203,7 +214,6 @@
     const banner = els.completionBanner;
     if (!banner) return;
     banner.classList.remove('hidden');
-    // Use GSAP if available
     if (window.gsap) {
       gsap.from('.completion-inner', { scale: 0.5, opacity: 0, duration: 0.5, ease: 'back.out(1.7)' });
     }
@@ -225,14 +235,8 @@
     updatePlayBtn();
   }
 
-  function stopClock() {
-    pauseClock();
-  }
-
-  function resetClock() {
-    pauseClock();
-    updateClockDisplay();
-  }
+  function stopClock() { pauseClock(); }
+  function resetClock() { pauseClock(); updateClockDisplay(); }
 
   function updateClockDisplay() {
     const now = new Date();
@@ -246,9 +250,9 @@
         weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
       });
     }
-    // Ring: sweep through minute cycle
+    // Progress: sweep through the minute
     const secs = now.getSeconds() + now.getMinutes() * 60;
-    setRingProgress(secs / 3600);
+    setProgressFill(els.clockProgressFill, secs / 3600);
   }
 
   /* ── Pomodoro ── */
@@ -269,7 +273,8 @@
     if (state.pomInterval) clearInterval(state.pomInterval);
     state.running = true;
     updatePomDisplay();
-    document.getElementById('timerRingWrap')?.classList.add('timer-active');
+    els.timerRingWrap?.classList.add('timer-active');
+    els.pomProgressFill?.classList.add('active');
     state.pomInterval = setInterval(pomTick, 1000);
     updatePlayBtn();
   }
@@ -277,14 +282,12 @@
   function pausePomodoro() {
     clearInterval(state.pomInterval);
     state.running = false;
-    document.getElementById('timerRingWrap')?.classList.remove('timer-active');
+    els.timerRingWrap?.classList.remove('timer-active');
+    els.pomProgressFill?.classList.remove('active');
     updatePlayBtn();
   }
 
-  function stopPomodoro() {
-    pausePomodoro();
-    resetPomodoro();
-  }
+  function stopPomodoro()  { pausePomodoro(); resetPomodoro(); }
 
   function resetPomodoro() {
     pausePomodoro();
@@ -292,7 +295,7 @@
     state.pomCycles = 0;
     syncPomSettings();
     state.pomRemaining = state.workDuration;
-    resetRing();
+    resetProgress();
     updatePomDisplay();
   }
 
@@ -301,7 +304,7 @@
       state.pomRemaining--;
       updatePomDisplay();
       const total = getPomPhaseDuration();
-      setRingProgress(state.pomRemaining / total);
+      setProgressFill(els.pomProgressFill, state.pomRemaining / total);
     } else {
       clearInterval(state.pomInterval);
       state.running = false;
@@ -317,26 +320,26 @@
 
   function onPomPhaseComplete() {
     playCompletionSound();
-    document.getElementById('timerRingWrap')?.classList.remove('timer-active');
+    els.timerRingWrap?.classList.remove('timer-active');
+    els.pomProgressFill?.classList.remove('active');
 
     if (state.pomPhase === 'work') {
       state.pomCycles++;
       if (state.pomCycles % state.cyclesBeforeLong === 0) {
         state.pomPhase = 'long';
         state.pomRemaining = state.longBreak;
-        sendNotification('Pomodoro', 'Great work! Take a long break 🎉');
+        sendNotification('Pomodoro', 'Great work! Take a long break.');
         if (els.liveRegion) els.liveRegion.textContent = 'Work session complete! Long break time.';
       } else {
         state.pomPhase = 'short';
         state.pomRemaining = state.shortBreak;
-        sendNotification('Pomodoro', 'Work session done! Short break 🌿');
+        sendNotification('Pomodoro', 'Work session done! Short break.');
         if (els.liveRegion) els.liveRegion.textContent = 'Work session complete! Short break time.';
       }
     } else {
-      // Break done, go back to work
       state.pomPhase = 'work';
       state.pomRemaining = state.workDuration;
-      sendNotification('Pomodoro', "Break's over! Time to focus 🔥");
+      sendNotification('Pomodoro', "Break's over! Time to focus.");
       if (els.liveRegion) els.liveRegion.textContent = 'Break complete! Back to work.';
     }
 
@@ -357,26 +360,22 @@
 
   /* ── Mode switching ── */
   function setMode(mode) {
-    // Stop whatever is running
     stopAll();
     state.mode = mode;
 
-    // Show/hide displays
     const displays = { timer: 'displayTimer', stopclock: 'displayClock', pomodoro: 'displayPomodoro' };
     Object.entries(displays).forEach(([k, id]) => {
       const el = document.getElementById(id);
       if (el) el.classList.toggle('hidden', k !== mode);
     });
 
-    // Show/hide inputs
     if (els.timerInputs) {
       els.timerInputs.style.display = mode === 'timer' ? 'flex' : 'none';
     }
 
-    resetRing();
+    resetProgress();
     updatePlayBtn();
 
-    // Auto-start clock display
     if (mode === 'stopclock') {
       updateClockDisplay();
       startClock();
@@ -407,7 +406,6 @@
     } else if (state.mode === 'pomodoro') {
       state.running ? pausePomodoro() : startPomodoro();
     }
-    // Notify Spotify
     window.dispatchEvent(new CustomEvent('timerToggle', { detail: { running: state.running } }));
   }
 
@@ -424,47 +422,44 @@
   }
 
   function updatePlayBtn() {
+    const playIcon  = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    if (playIcon)  playIcon.style.display  = state.running ? 'none' : '';
+    if (pauseIcon) pauseIcon.style.display = state.running ? ''     : 'none';
     if (els.btnPlay) {
-      els.btnPlay.textContent = state.running ? '⏸' : '▶';
       els.btnPlay.setAttribute('aria-label', state.running ? 'Pause' : 'Start');
     }
   }
 
   /* ── Init ── */
   function init() {
-    // Explicit IDs
-    els.timerDigits   = document.getElementById('timerDigits');
-    els.clockDigits   = document.getElementById('clockDigits');
-    els.clockDate     = document.getElementById('clockDate');
-    els.pomDigits     = document.getElementById('pomDigits');
-    els.pomPhaseBadge = document.getElementById('pomPhaseBadge');
-    els.pomCycleCount = document.getElementById('pomCycleCount');
-    els.ringProgress  = document.getElementById('ringProgress');
-    els.btnPlay       = document.getElementById('btnPlay');
-    els.btnReset      = document.getElementById('btnReset');
-    els.btnStop       = document.getElementById('btnStop');
-    els.timerInputs   = document.getElementById('timerInputs');
-    els.inputHours    = document.getElementById('inputHours');
-    els.inputMinutes  = document.getElementById('inputMinutes');
-    els.inputSeconds  = document.getElementById('inputSeconds');
+    els.timerDigits    = document.getElementById('timerDigits');
+    els.clockDigits    = document.getElementById('clockDigits');
+    els.clockDate      = document.getElementById('clockDate');
+    els.pomDigits      = document.getElementById('pomDigits');
+    els.pomPhaseBadge  = document.getElementById('pomPhaseBadge');
+    els.pomCycleCount  = document.getElementById('pomCycleCount');
+    // Progress fills
+    els.timerProgressFill = document.getElementById('ringProgress');
+    els.clockProgressFill = document.getElementById('clockRingProgress');
+    els.pomProgressFill   = document.getElementById('pomRingProgress');
+    // Buttons
+    els.btnPlay   = document.getElementById('btnPlay');
+    els.btnReset  = document.getElementById('btnReset');
+    els.btnStop   = document.getElementById('btnStop');
+    // Inputs
+    els.timerInputs  = document.getElementById('timerInputs');
+    els.inputHours   = document.getElementById('inputHours');
+    els.inputMinutes = document.getElementById('inputMinutes');
+    els.inputSeconds = document.getElementById('inputSeconds');
+    // Displays
     els.displayTimer    = document.getElementById('displayTimer');
     els.displayClock    = document.getElementById('displayClock');
     els.displayPomodoro = document.getElementById('displayPomodoro');
+    // Misc
     els.completionBanner = document.getElementById('completionBanner');
-    els.liveRegion = document.getElementById('liveRegion');
-
-    // Inject SVG gradient
-    const svg = document.querySelector('.timer-ring-svg');
-    if (svg) {
-      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-      defs.innerHTML = `
-        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#6c63ff"/>
-          <stop offset="100%" stop-color="#ff6584"/>
-        </linearGradient>`;
-      svg.insertBefore(defs, svg.firstChild);
-      svg.querySelector('.ring-progress').setAttribute('stroke', 'url(#ringGrad)');
-    }
+    els.liveRegion       = document.getElementById('liveRegion');
+    els.timerRingWrap    = document.getElementById('timerRingWrap');
 
     // Wire buttons
     els.btnPlay?.addEventListener('click', togglePlay);
@@ -480,17 +475,17 @@
       });
     });
 
-    // Input change resets timer
+    // Input changes reset timer
     [els.inputHours, els.inputMinutes, els.inputSeconds].forEach(input => {
       input?.addEventListener('input', () => {
         if (!state.running) {
-          const h = parseInt(els.inputHours?.value || 0, 10) || 0;
+          const h = parseInt(els.inputHours?.value  || 0, 10) || 0;
           const m = parseInt(els.inputMinutes?.value || 0, 10) || 0;
           const s = parseInt(els.inputSeconds?.value || 0, 10) || 0;
           state.totalSeconds = h * 3600 + m * 60 + s;
           state.remainingSeconds = state.totalSeconds;
           updateTimerDisplay();
-          resetRing();
+          resetProgress();
         }
       });
     });
@@ -511,5 +506,7 @@
     setMode,
     getState: () => ({ ...state }),
     syncSettings: () => syncPomSettings(),
+    setRingProgress,
+    resetRing,
   };
 })();

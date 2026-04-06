@@ -187,13 +187,20 @@
     }
   }
 
+  function updateSpPlayPauseIcon(playing) {
+    const playIcon  = document.getElementById('spPlayIcon');
+    const pauseIcon = document.getElementById('spPauseIcon');
+    if (playIcon)  playIcon.style.display  = playing ? 'none' : '';
+    if (pauseIcon) pauseIcon.style.display = playing ? ''     : 'none';
+  }
+
   function updatePlayerUI(data) {
     if (!data || !data.item) {
       if (el.trackName) el.trackName.textContent = 'Nothing playing';
       if (el.artistName) el.artistName.textContent = '—';
       if (el.albumName)  el.albumName.textContent  = '—';
       if (el.albumArt)   el.albumArt.src = '';
-      if (el.spPlayPause) el.spPlayPause.textContent = '▶';
+      updateSpPlayPauseIcon(false);
       state.playing = false;
       return;
     }
@@ -211,11 +218,10 @@
     if (el.albumArt && artUrl) {
       el.albumArt.src = artUrl;
       el.albumArt.alt = track.album.name;
-      // Update glow color (average to accent green)
       if (el.artGlow) el.artGlow.style.background = '#1DB954';
     }
 
-    if (el.spPlayPause) el.spPlayPause.textContent = state.playing ? '⏸' : '▶';
+    updateSpPlayPauseIcon(state.playing);
 
     updateProgress();
     startProgressSmoother(state.playing);
@@ -255,9 +261,10 @@
       await apiCall('/me/player/play', 'PUT');
       state.playing = true;
     }
-    if (el.spPlayPause) el.spPlayPause.textContent = state.playing ? '⏸' : '▶';
+    if (el.spPlayPause) updateSpPlayPauseIcon(state.playing);
     startProgressSmoother(state.playing);
   }
+
 
   async function nextTrack() {
     await apiCall('/me/player/next', 'POST');
@@ -294,18 +301,16 @@
     const settings = window.timerSettings || {};
     if (!settings.spotifyPauseWithTimer) return;
     if (!state.connected) return;
-    // If timer starts and music is playing → pause music
-    // If timer stops and music was paused by us → resume
     const running = e.detail?.running;
     if (running && state.playing) {
       apiCall('/me/player/pause', 'PUT');
       state.playing = false;
-      if (el.spPlayPause) el.spPlayPause.textContent = '▶';
+      updateSpPlayPauseIcon(false);
       timerWasPausing = true;
     } else if (!running && timerWasPausing) {
       apiCall('/me/player/play', 'PUT');
       state.playing = true;
-      if (el.spPlayPause) el.spPlayPause.textContent = '⏸';
+      updateSpPlayPauseIcon(true);
       timerWasPausing = false;
     }
   });

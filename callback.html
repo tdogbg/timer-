@@ -22,7 +22,7 @@
       backdrop-filter: blur(20px);
       max-width: 400px;
     }
-    .icon { font-size: 3rem; margin-bottom: 16px; }
+    .icon { display:flex; justify-content:center; margin-bottom: 16px; }
     h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
     p  { font-size: 0.9rem; color: rgba(232,234,240,0.6); }
     .error { color: #ff6584; }
@@ -55,7 +55,10 @@
 
       function setError(msg) {
         progress.style.display = 'none';
-        document.getElementById('card').insertAdjacentHTML('afterbegin', '<div class="icon">❌</div>');
+        const icon = document.createElement('div');
+        icon.className = 'icon';
+        icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#ff6584" stroke-width="2.5" width="48" height="48"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+        document.getElementById('card').insertBefore(icon, document.getElementById('card').firstChild);
         heading.textContent = 'Authentication Failed';
         message.textContent = msg;
         message.classList.add('error');
@@ -64,7 +67,10 @@
 
       function setSuccess() {
         progress.style.display = 'none';
-        document.getElementById('card').insertAdjacentHTML('afterbegin', '<div class="icon">✅</div>');
+        const icon = document.createElement('div');
+        icon.className = 'icon';
+        icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="#43e97b" stroke-width="2.5" width="48" height="48"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>';
+        document.getElementById('card').insertBefore(icon, document.getElementById('card').firstChild);
         heading.textContent = 'Connected!';
         message.textContent = 'Spotify is now linked. Redirecting you back…';
       }
