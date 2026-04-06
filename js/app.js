@@ -67,109 +67,109 @@
   }
 
   /* =========================================================
-     THREE.JS INTRO SCREEN
+     CANVAS 2D INTRO ANIMATION (no external deps required)
      ========================================================= */
-  function initThreeIntro(onComplete) {
-    const screen = document.getElementById('introScreen');
-    const canvas = document.getElementById('introCanvas');
+  function initIntro(onComplete) {
+    const screen  = document.getElementById('introScreen');
+    const canvas  = document.getElementById('introCanvas');
     const barFill = document.getElementById('introBarFill');
-    if (!screen || !canvas || typeof THREE === 'undefined') {
-      if (screen) {
-        if (window.gsap) {
-          gsap.to(screen, { opacity: 0, duration: 0.5, onComplete: () => { screen.style.display = 'none'; if (onComplete) onComplete(); } });
-        } else {
-          screen.style.display = 'none';
-          if (onComplete) onComplete();
-        }
-      } else {
-        if (onComplete) onComplete();
-      }
-      return;
+    if (!screen || !canvas) { if (onComplete) onComplete(); return; }
+
+    const ctx = canvas.getContext('2d');
+    let W, H;
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Particles
+    const PARTICLE_COUNT = window.innerWidth < 600 ? 600 : 1400;
+    const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      r: 0.5 + Math.random() * 1.5,
+      hue: Math.random() > 0.55 ? 248 : 340,  // purple or pink
+      alpha: 0.3 + Math.random() * 0.7,
+    }));
+
+    // Wireframe triangles (pseudo-3D shapes)
+    function makeTriangle(cx, cy, size, angle) {
+      return [0, 1, 2].map(i => {
+        const a = angle + (i * Math.PI * 2) / 3;
+        return { x: cx + Math.cos(a) * size, y: cy + Math.sin(a) * size };
+      });
     }
 
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 1000);
-    camera.position.z = 5;
-
-    // Particle system
-    const particleCount = 1200;
-    const positions = new Float32Array(particleCount * 3);
-    const colors = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-      positions[i * 3]     = (Math.random() - 0.5) * 20;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
-      // Gradient from purple to pink
-      const t = Math.random();
-      colors[i * 3]     = 0.42 + t * 0.58;   // R
-      colors[i * 3 + 1] = 0.39 * (1 - t);    // G
-      colors[i * 3 + 2] = 1 - t * 0.5;       // B
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    const particleMat = new THREE.PointsMaterial({
-      size: 0.04, vertexColors: true, transparent: true, opacity: 0.85,
-    });
-    const particles = new THREE.Points(geo, particleMat);
-    scene.add(particles);
-
-    // A few wireframe geometric shapes
-    const shapes = [];
-    const shapeDefs = [
-      { geo: new THREE.IcosahedronGeometry(0.8, 0), pos: [0, 0, 0] },
-      { geo: new THREE.OctahedronGeometry(0.5, 0),  pos: [2.5, 1, -2] },
-      { geo: new THREE.OctahedronGeometry(0.4, 0),  pos: [-2.5, -1, -2] },
+    const shapes = [
+      { cx: W * 0.5,  cy: H * 0.5,  size: 80, angle: 0,   speed: 0.008 },
+      { cx: W * 0.25, cy: H * 0.4,  size: 45, angle: 0.5, speed: 0.012 },
+      { cx: W * 0.75, cy: H * 0.55, size: 55, angle: 1.0, speed: 0.009 },
     ];
-    shapeDefs.forEach(({ geo: g, pos }) => {
-      const mat = new THREE.MeshBasicMaterial({ color: 0x6c63ff, wireframe: true, transparent: true, opacity: 0.3 });
-      const mesh = new THREE.Mesh(g, mat);
-      mesh.position.set(...pos);
-      scene.add(mesh);
-      shapes.push(mesh);
-    });
 
     let startTime = null;
-    const DURATION = 2800; // ms
+    const DURATION = 2600; // ms
     let rafId;
 
-    function animate(ts) {
+    function draw(ts) {
       if (!startTime) startTime = ts;
-      const elapsed = ts - startTime;
+      const elapsed  = ts - startTime;
       const progress = Math.min(elapsed / DURATION, 1);
 
-      // Update progress bar
       if (barFill) barFill.style.width = `${progress * 100}%`;
 
-      particles.rotation.y += 0.002;
-      particles.rotation.x += 0.001;
-      shapes.forEach((s, i) => {
-        s.rotation.x += 0.008 + i * 0.003;
-        s.rotation.y += 0.01 + i * 0.002;
+      ctx.clearRect(0, 0, W, H);
+
+      // Update and draw particles
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = W;
+        if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H;
+        if (p.y > H) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue}, 80%, 65%, ${p.alpha * 0.9})`;
+        ctx.fill();
       });
 
-      renderer.render(scene, camera);
+      // Draw rotating wireframe triangles
+      shapes.forEach((s, i) => {
+        s.angle += s.speed;
+        const pts = makeTriangle(s.cx, s.cy, s.size, s.angle);
+        // Inner triangle (rotated)
+        const pts2 = makeTriangle(s.cx, s.cy, s.size * 0.5, -s.angle * 1.5);
+
+        ctx.beginPath();
+        pts.forEach((p, j) => j === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        ctx.closePath();
+        ctx.strokeStyle = `rgba(108, 99, 255, ${0.25 + i * 0.05})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.beginPath();
+        pts2.forEach((p, j) => j === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        ctx.closePath();
+        ctx.strokeStyle = `rgba(255, 101, 132, ${0.2 + i * 0.04})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      });
 
       if (progress < 1) {
-        rafId = requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(draw);
       } else {
-        // Fade out intro
         cancelAnimationFrame(rafId);
-        renderer.dispose();
+        window.removeEventListener('resize', resize);
         if (window.gsap) {
           gsap.to(screen, {
             opacity: 0, duration: 0.7, ease: 'power2.inOut',
-            onComplete: () => {
-              screen.style.display = 'none';
-              if (onComplete) onComplete();
-            },
+            onComplete: () => { screen.style.display = 'none'; if (onComplete) onComplete(); },
           });
         } else {
           screen.style.display = 'none';
@@ -178,16 +178,7 @@
       }
     }
 
-    rafId = requestAnimationFrame(animate);
-
-    // Handle resize during intro
-    function onResize() {
-      const w = window.innerWidth, h = window.innerHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    }
-    window.addEventListener('resize', onResize, { once: false });
+    rafId = requestAnimationFrame(draw);
   }
 
   /* =========================================================
@@ -500,15 +491,15 @@
       });
     });
     grid.addEventListener('mouseleave', e => {
-      if (e.target.closest('.clock-card')) return;
-      grid.querySelectorAll('.clock-card').forEach(c => {
-        gsap.to(c, { rotationY: 0, rotationX: 0, duration: 0.4, ease: 'power2.out' });
-      });
-    }, true);
-    grid.addEventListener('mouseleave', e => {
       const card = e.target.closest('.clock-card');
       if (card) {
+        // Mouse left a specific card
         gsap.to(card, { rotationY: 0, rotationX: 0, duration: 0.4, ease: 'power2.out' });
+      } else if (!e.relatedTarget || !grid.contains(e.relatedTarget)) {
+        // Mouse left the entire grid
+        grid.querySelectorAll('.clock-card').forEach(c => {
+          gsap.to(c, { rotationY: 0, rotationX: 0, duration: 0.4, ease: 'power2.out' });
+        });
       }
     }, true);
   }
@@ -539,8 +530,8 @@
     window.timerSettings = settings;
     applySettingsToUI(settings);
 
-    // Run Three.js intro, then bootstrap the rest of the app
-    initThreeIntro(() => {
+    // Run intro animation, then bootstrap the rest of the app
+    initIntro(() => {
       // Init modules
       window.TimerController?.init();
       window.WorldClocks?.init();

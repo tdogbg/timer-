@@ -474,7 +474,6 @@ button { font-family: inherit; cursor: none; }
    ========================================================= */
 .spotify-panel { position: relative; overflow: hidden; }
 
-.spotify-widget {}
 .spotify-auth {
   display: flex; flex-direction: column;
   align-items: center; gap: 16px;
@@ -600,7 +599,6 @@ button { font-family: inherit; cursor: none; }
 /* =========================================================
    WORLD CLOCKS
    ========================================================= */
-.worldclocks-panel {}
 .worldclocks-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));

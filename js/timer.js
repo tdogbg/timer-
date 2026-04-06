@@ -130,11 +130,11 @@
     setProgressFill(els.pomProgressFill, 1);
   }
 
-  /* ── Kept for backward compat (used in app.js ring glow listener) ── */
+  /* ── Kept for backward compat: maps to the active mode's progress bar ── */
   function setRingProgress(fraction) {
-    if (state.mode === 'timer')    setProgressFill(els.timerProgressFill, fraction);
-    if (state.mode === 'stopclock') setProgressFill(els.clockProgressFill, fraction);
-    if (state.mode === 'pomodoro') setProgressFill(els.pomProgressFill, fraction);
+    if (state.mode === 'timer')     { setProgressFill(els.timerProgressFill, fraction); return; }
+    if (state.mode === 'stopclock') { setProgressFill(els.clockProgressFill, fraction); return; }
+    setProgressFill(els.pomProgressFill, fraction);
   }
   function resetRing() { resetProgress(); }
 
