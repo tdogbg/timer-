@@ -1,6 +1,6 @@
 /**
  * js/app.js — Main application bootstrap
- * Handles: GSAP animations, parallax, cursor tracking,
+ * Handles: Three.js intro, GSAP animations, smoke trail cursor,
  *           particles, settings panel, scroll effects.
  */
 (function () {
@@ -67,19 +67,134 @@
   }
 
   /* =========================================================
-     PARTICLES
+     CANVAS 2D INTRO ANIMATION (no external deps required)
+     ========================================================= */
+  function initIntro(onComplete) {
+    const screen  = document.getElementById('introScreen');
+    const canvas  = document.getElementById('introCanvas');
+    const barFill = document.getElementById('introBarFill');
+    if (!screen || !canvas) { if (onComplete) onComplete(); return; }
+
+    const ctx = canvas.getContext('2d');
+    let W, H;
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Particles
+    const PARTICLE_COUNT = window.innerWidth < 600 ? 300 : 800;
+    const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      r: 0.5 + Math.random() * 1.5,
+      hue: Math.random() > 0.55 ? 248 : 340,  // purple or pink
+      alpha: 0.3 + Math.random() * 0.7,
+    }));
+
+    // Wireframe triangles (pseudo-3D shapes)
+    function makeTriangle(cx, cy, size, angle) {
+      return [0, 1, 2].map(i => {
+        const a = angle + (i * Math.PI * 2) / 3;
+        return { x: cx + Math.cos(a) * size, y: cy + Math.sin(a) * size };
+      });
+    }
+
+    const shapes = [
+      { cx: W * 0.5,  cy: H * 0.5,  size: 80, angle: 0,   speed: 0.008 },
+      { cx: W * 0.25, cy: H * 0.4,  size: 45, angle: 0.5, speed: 0.012 },
+      { cx: W * 0.75, cy: H * 0.55, size: 55, angle: 1.0, speed: 0.009 },
+    ];
+
+    let startTime = null;
+    const DURATION = 2600; // ms
+    let rafId;
+
+    function draw(ts) {
+      if (!startTime) startTime = ts;
+      const elapsed  = ts - startTime;
+      const progress = Math.min(elapsed / DURATION, 1);
+
+      if (barFill) barFill.style.width = `${progress * 100}%`;
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Update and draw particles
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = W;
+        if (p.x > W) p.x = 0;
+        if (p.y < 0) p.y = H;
+        if (p.y > H) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue}, 80%, 65%, ${p.alpha * 0.9})`;
+        ctx.fill();
+      });
+
+      // Draw rotating wireframe triangles
+      shapes.forEach((s, i) => {
+        s.angle += s.speed;
+        const pts = makeTriangle(s.cx, s.cy, s.size, s.angle);
+        // Inner triangle (rotated)
+        const pts2 = makeTriangle(s.cx, s.cy, s.size * 0.5, -s.angle * 1.5);
+
+        ctx.beginPath();
+        pts.forEach((p, j) => j === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        ctx.closePath();
+        ctx.strokeStyle = `rgba(108, 99, 255, ${0.25 + i * 0.05})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.beginPath();
+        pts2.forEach((p, j) => j === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        ctx.closePath();
+        ctx.strokeStyle = `rgba(255, 101, 132, ${0.2 + i * 0.04})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      });
+
+      if (progress < 1) {
+        rafId = requestAnimationFrame(draw);
+      } else {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', resize);
+        if (window.gsap) {
+          gsap.to(screen, {
+            opacity: 0, duration: 0.7, ease: 'power2.inOut',
+            onComplete: () => { screen.style.display = 'none'; if (onComplete) onComplete(); },
+          });
+        } else {
+          screen.style.display = 'none';
+          if (onComplete) onComplete();
+        }
+      }
+    }
+
+    rafId = requestAnimationFrame(draw);
+  }
+
+  /* =========================================================
+     PARTICLES (background field)
      ========================================================= */
   function initParticles() {
     const field = document.getElementById('particleField');
     if (!field) return;
-    const count = window.innerWidth < 600 ? 20 : 50;
+    const count = window.innerWidth < 600 ? 25 : 60;
     for (let i = 0; i < count; i++) {
       const p = document.createElement('div');
+      const size = 1 + Math.random() * 2.5;
       p.style.cssText = `
         position:absolute;
-        width:${1 + Math.random() * 2}px;
-        height:${1 + Math.random() * 2}px;
-        background:rgba(108,99,255,${0.2 + Math.random() * 0.4});
+        width:${size}px; height:${size}px;
+        background:rgba(${Math.random() > 0.5 ? '108,99,255' : '255,101,132'},${0.15 + Math.random() * 0.3});
         border-radius:50%;
         left:${Math.random() * 100}%;
         top:${Math.random() * 100}%;
@@ -88,57 +203,88 @@
       field.appendChild(p);
       if (window.gsap) {
         gsap.to(p, {
-          x: () => (Math.random() - 0.5) * 200,
-          y: () => (Math.random() - 0.5) * 200,
-          duration: 10 + Math.random() * 20,
+          x: () => (Math.random() - 0.5) * 300,
+          y: () => (Math.random() - 0.5) * 300,
+          duration: 12 + Math.random() * 24,
           repeat: -1,
           yoyo: true,
           ease: 'sine.inOut',
-          delay: Math.random() * 10,
+          delay: Math.random() * 12,
         });
       }
     }
   }
 
   /* =========================================================
-     CURSOR TRACKING
+     SMOKE TRAIL CURSOR
      ========================================================= */
-  function initCursor() {
-    const dot  = document.getElementById('cursorDot');
-    const ring = document.getElementById('cursorRing');
-    if (!dot || !ring) return;
+  function initSmokeCursor() {
     if ('ontouchstart' in window) return; // skip on touch
+    const container = document.getElementById('smokeTrail');
+    if (!container) return;
 
-    let mx = 0, my = 0;
-    let rx = 0, ry = 0;
+    const POOL_SIZE = 18;
+    const pool = [];
+    let poolIdx = 0;
+
+    // Pre-create particles
+    for (let i = 0; i < POOL_SIZE; i++) {
+      const p = document.createElement('div');
+      p.className = 'smoke-particle';
+      p.style.cssText = `
+        width: 10px; height: 10px;
+        background: radial-gradient(circle, rgba(108,99,255,0.7) 0%, transparent 70%);
+        opacity: 0;
+      `;
+      container.appendChild(p);
+      pool.push(p);
+    }
+
+    let lastX = -999, lastY = -999;
+
+    function spawnSmoke(x, y) {
+      // Only spawn if moved enough
+      const dx = x - lastX, dy = y - lastY;
+      if (dx * dx + dy * dy < 64) return;
+      lastX = x; lastY = y;
+
+      const particle = pool[poolIdx % POOL_SIZE];
+      poolIdx++;
+
+      // Randomize color between accent and accent2
+      const useAccent2 = Math.random() > 0.6;
+      const color = useAccent2 ? 'rgba(255,101,132,0.7)' : 'rgba(108,99,255,0.7)';
+      const size = 8 + Math.random() * 14;
+
+      particle.style.left  = x + 'px';
+      particle.style.top   = y + 'px';
+      particle.style.width  = size + 'px';
+      particle.style.height = size + 'px';
+      particle.style.background = `radial-gradient(circle, ${color} 0%, transparent 70%)`;
+
+      if (window.gsap) {
+        gsap.killTweensOf(particle);
+        gsap.fromTo(particle,
+          { opacity: 0.7, scale: 0.5, x: 0, y: 0 },
+          {
+            opacity: 0,
+            scale: 2 + Math.random(),
+            x: (Math.random() - 0.5) * 40,
+            y: -20 - Math.random() * 30,
+            duration: 0.7 + Math.random() * 0.5,
+            ease: 'power2.out',
+          }
+        );
+      }
+    }
 
     window.addEventListener('mousemove', e => {
-      mx = e.clientX; my = e.clientY;
-      if (window.gsap) {
-        gsap.to(dot, { left: mx, top: my, duration: 0.05, ease: 'none' });
-        gsap.to(ring, { left: mx, top: my, duration: 0.18, ease: 'power2.out' });
-      } else {
-        dot.style.left  = mx + 'px'; dot.style.top  = my + 'px';
-        ring.style.left = mx + 'px'; ring.style.top = my + 'px';
-      }
-    });
-
-    // Hover effect on interactive elements
-    const interactives = 'button, a, input, label, [data-mode]';
-    document.addEventListener('mouseover', e => {
-      if (e.target.closest(interactives)) {
-        ring.classList.add('hover');
-      }
-    });
-    document.addEventListener('mouseout', e => {
-      if (e.target.closest(interactives)) {
-        ring.classList.remove('hover');
-      }
+      spawnSmoke(e.clientX, e.clientY);
     });
   }
 
   /* =========================================================
-     GSAP ANIMATIONS
+     GSAP ANIMATIONS (post-intro)
      ========================================================= */
   function initAnimations() {
     if (!window.gsap) return;
@@ -148,60 +294,48 @@
       y: -80, opacity: 0, duration: 1, ease: 'expo.out', delay: 0.1,
     });
 
-    // Hero ring and face
-    gsap.from('.timer-ring-wrap', {
-      scale: 0.5, opacity: 0, duration: 1.2, ease: 'expo.out', delay: 0.3,
+    // Timer display
+    gsap.from('.timer-display-wrap', {
+      scale: 0.85, opacity: 0, duration: 1.2, ease: 'expo.out', delay: 0.3,
     });
     gsap.from('.controls-bar', {
-      y: 40, opacity: 0, duration: 0.9, ease: 'power3.out', delay: 0.6,
+      y: 40, opacity: 0, duration: 0.9, ease: 'power3.out', delay: 0.55,
     });
 
     // Scroll-triggered sections
     if (window.ScrollTrigger) {
       gsap.registerPlugin(ScrollTrigger);
 
-      // Spotify section
-      gsap.to('#spotifySection', {
-        opacity: 1, y: 0, duration: 0.9, ease: 'power3.out',
+      // Panels section fade-in
+      gsap.to('#panelsSection', {
+        opacity: 1, y: 0, duration: 1, ease: 'power3.out',
         scrollTrigger: {
-          trigger: '#spotifySection',
-          start: 'top 80%',
+          trigger: '#panelsSection',
+          start: 'top 85%',
           toggleActions: 'play none none reverse',
         },
       });
 
-      // World clocks section
-      gsap.to('#worldClocksSection', {
-        opacity: 1, y: 0, duration: 0.9, ease: 'power3.out',
-        scrollTrigger: {
-          trigger: '#worldClocksSection',
-          start: 'top 80%',
-          toggleActions: 'play none none reverse',
-        },
-      });
-
-      // Individual clock cards stagger
+      // Clock cards stagger
       gsap.from('.clock-card', {
-        opacity: 0, y: 30, scale: 0.95,
-        stagger: 0.05, duration: 0.5, ease: 'power2.out',
+        opacity: 0, y: 20, scale: 0.96,
+        stagger: 0.06, duration: 0.5, ease: 'power2.out',
         scrollTrigger: {
           trigger: '#worldClocksGrid',
-          start: 'top 85%',
+          start: 'top 88%',
         },
       });
 
-      // Parallax on orbs
-      document.querySelectorAll('.orb').forEach((orb, i) => {
-        gsap.to(orb, {
-          y: () => -100 * (i + 1),
-          ease: 'none',
-          scrollTrigger: {
-            trigger: 'body',
-            start: 'top top',
-            end: 'bottom bottom',
-            scrub: true,
-          },
-        });
+      // Parallax on background gradient layers
+      gsap.to('.bg-canvas', {
+        backgroundPositionY: '30%',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: 'body',
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: true,
+        },
       });
     }
   }
@@ -210,8 +344,8 @@
      SETTINGS PANEL
      ========================================================= */
   function initSettingsPanel(settings) {
-    const overlay = document.getElementById('settingsOverlay');
-    const openBtn = document.getElementById('settingsToggle');
+    const overlay  = document.getElementById('settingsOverlay');
+    const openBtn  = document.getElementById('settingsToggle');
     const closeBtn = document.getElementById('settingsClose');
     const saveSpotify = document.getElementById('saveSpotifyClientId');
     const notifToggle = document.getElementById('notifToggle');
@@ -219,7 +353,7 @@
     openBtn?.addEventListener('click', () => {
       overlay?.classList.remove('hidden');
       if (window.gsap) {
-        gsap.from('#settingsPanel', { scale: 0.9, opacity: 0, duration: 0.35, ease: 'expo.out' });
+        gsap.from('#settingsPanel', { scale: 0.92, opacity: 0, duration: 0.35, ease: 'expo.out' });
       }
     });
 
@@ -236,17 +370,14 @@
       if (e.target === overlay) closePanel();
     });
 
-    // Save Spotify client ID
     saveSpotify?.addEventListener('click', () => {
       const current = readSettingsFromUI();
       saveSettings(current);
       window.timerSettings = current;
       closePanel();
-      // Re-init Spotify login flow
       window.SpotifyController?.login();
     });
 
-    // Request notification permission
     notifToggle?.addEventListener('change', e => {
       if (e.target.checked && Notification.permission !== 'granted') {
         Notification.requestPermission().then(perm => {
@@ -260,14 +391,16 @@
      SOUND TOGGLE
      ========================================================= */
   function initSoundToggle(settings) {
-    const btn = document.getElementById('soundToggle');
-    let soundOn = settings.soundEnabled;
+    const btn     = document.getElementById('soundToggle');
+    const iconOn  = document.getElementById('soundIconOn');
+    const iconOff = document.getElementById('soundIconOff');
+    let soundOn   = settings.soundEnabled;
 
     function update() {
-      if (btn) btn.textContent = soundOn ? '🔊' : '🔇';
+      if (iconOn)  iconOn.style.display  = soundOn ? '' : 'none';
+      if (iconOff) iconOff.style.display = soundOn ? 'none' : '';
       window.timerSettings = { ...window.timerSettings, soundEnabled: soundOn };
       saveSettings(window.timerSettings);
-      // Sync settings checkbox too
       const el = document.getElementById('soundSetting');
       if (el) el.checked = soundOn;
     }
@@ -280,7 +413,7 @@
   }
 
   /* =========================================================
-     PARALLAX — mouse movement subtle effect
+     PARALLAX — mouse movement subtle effect on timer
      ========================================================= */
   function initMouseParallax() {
     if (!window.gsap) return;
@@ -292,23 +425,23 @@
       const dy = (e.clientY - cy) / cy;
       if (wrap) {
         gsap.to(wrap, {
-          rotationY: dx * 6,
-          rotationX: -dy * 6,
-          duration: 0.6, ease: 'power2.out',
-          transformPerspective: 800,
+          rotationY: dx * 4,
+          rotationX: -dy * 4,
+          duration: 0.8, ease: 'power2.out',
+          transformPerspective: 1000,
         });
       }
     });
   }
 
   /* =========================================================
-     ZOOM ON SCROLL — hero shrinks away
+     ZOOM ON SCROLL — hero shrinks
      ========================================================= */
   function initScrollZoom() {
     if (!window.gsap || !window.ScrollTrigger) return;
     gsap.to('.hero-content', {
-      scale: 0.92,
-      opacity: 0.7,
+      scale: 0.94,
+      opacity: 0.75,
       ease: 'none',
       scrollTrigger: {
         trigger: '.hero-section',
@@ -326,13 +459,13 @@
     if (!window.gsap) return;
     document.querySelectorAll('.ctrl-btn, .sp-btn, .nav-btn').forEach(btn => {
       btn.addEventListener('mouseenter', () => {
-        gsap.to(btn, { scale: 1.08, duration: 0.2, ease: 'back.out(2)' });
+        gsap.to(btn, { scale: 1.08, duration: 0.18, ease: 'back.out(2)' });
       });
       btn.addEventListener('mouseleave', () => {
-        gsap.to(btn, { scale: 1, duration: 0.2, ease: 'power2.out' });
+        gsap.to(btn, { scale: 1, duration: 0.18, ease: 'power2.out' });
       });
       btn.addEventListener('click', () => {
-        gsap.fromTo(btn, { scale: 0.9 }, { scale: 1, duration: 0.25, ease: 'back.out(3)' });
+        gsap.fromTo(btn, { scale: 0.9 }, { scale: 1, duration: 0.22, ease: 'back.out(3)' });
       });
     });
   }
@@ -342,37 +475,33 @@
      ========================================================= */
   function initCardTilt() {
     if (!window.gsap) return;
-    document.querySelectorAll('.clock-card').forEach(card => {
-      card.addEventListener('mousemove', e => {
-        const rect = card.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width  - 0.5) * 20;
-        const y = ((e.clientY - rect.top)  / rect.height - 0.5) * -20;
-        gsap.to(card, {
-          rotationY: x, rotationX: y,
-          transformPerspective: 600,
-          duration: 0.3, ease: 'power2.out',
-        });
+    // Cards are injected by worldclocks.js, so use event delegation
+    const grid = document.getElementById('worldClocksGrid');
+    if (!grid) return;
+    grid.addEventListener('mousemove', e => {
+      const card = e.target.closest('.clock-card');
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width  - 0.5) * 18;
+      const y = ((e.clientY - rect.top)  / rect.height - 0.5) * -18;
+      gsap.to(card, {
+        rotationY: x, rotationX: y,
+        transformPerspective: 700,
+        duration: 0.25, ease: 'power2.out',
       });
-      card.addEventListener('mouseleave', () => {
+    });
+    grid.addEventListener('mouseleave', e => {
+      const card = e.target.closest('.clock-card');
+      if (card) {
+        // Mouse left a specific card
         gsap.to(card, { rotationY: 0, rotationX: 0, duration: 0.4, ease: 'power2.out' });
-      });
-    });
-  }
-
-  /* =========================================================
-     GLOWING RING — pulse on running
-     ========================================================= */
-  function initRingGlow() {
-    const ring = document.getElementById('ringProgress');
-    if (!ring || !window.gsap) return;
-    window.addEventListener('timerToggle', e => {
-      const running = e.detail?.running;
-      if (running) {
-        gsap.to(ring, { filter: 'drop-shadow(0 0 16px rgba(108,99,255,0.95))', duration: 0.5 });
-      } else {
-        gsap.to(ring, { filter: 'drop-shadow(0 0 6px rgba(108,99,255,0.5))', duration: 0.5 });
+      } else if (!e.relatedTarget || !grid.contains(e.relatedTarget)) {
+        // Mouse left the entire grid
+        grid.querySelectorAll('.clock-card').forEach(c => {
+          gsap.to(c, { rotationY: 0, rotationX: 0, duration: 0.4, ease: 'power2.out' });
+        });
       }
-    });
+    }, true);
   }
 
   /* =========================================================
@@ -386,7 +515,7 @@
     window.addEventListener('spotifyPlayState', e => {
       const playing = e.detail?.playing;
       if (playing) {
-        rotTween = gsap.to(art, { rotation: '+=360', duration: 8, repeat: -1, ease: 'none' });
+        rotTween = gsap.to(art, { rotation: '+=360', duration: 10, repeat: -1, ease: 'none' });
       } else {
         rotTween?.pause();
       }
@@ -397,27 +526,28 @@
      MAIN INIT
      ========================================================= */
   document.addEventListener('DOMContentLoaded', () => {
-    // Load & apply settings
     const settings = loadSettings();
     window.timerSettings = settings;
     applySettingsToUI(settings);
 
-    // Init modules
-    window.TimerController?.init();
-    window.WorldClocks?.init();
-    window.SpotifyController?.init();
+    // Run intro animation, then bootstrap the rest of the app
+    initIntro(() => {
+      // Init modules
+      window.TimerController?.init();
+      window.WorldClocks?.init();
+      window.SpotifyController?.init();
 
-    // UI & animation init
-    initSettingsPanel(settings);
-    initSoundToggle(settings);
-    initParticles();
-    initCursor();
-    initAnimations();
-    initMouseParallax();
-    initScrollZoom();
-    initButtonAnimations();
-    initCardTilt();
-    initRingGlow();
-    initAlbumArtAnimation();
+      // UI & animation init
+      initSettingsPanel(settings);
+      initSoundToggle(settings);
+      initParticles();
+      initSmokeCursor();
+      initAnimations();
+      initMouseParallax();
+      initScrollZoom();
+      initButtonAnimations();
+      initCardTilt();
+      initAlbumArtAnimation();
+    });
   });
 })();

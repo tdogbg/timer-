@@ -1,17 +1,18 @@
 /* =========================================================
-   TIMEX — Immersive Timer  |  css/style.css
-   Dark glassmorphism aesthetic with GSAP-powered animations
+   TIMEX — Premium Timer  |  css/style.css
+   Dark glassmorphism aesthetic — no emojis, no rings
    ========================================================= */
 
 /* ── Variables ── */
 :root {
   --clr-bg:        #080b12;
   --clr-surface:   rgba(255,255,255,0.04);
-  --clr-glass:     rgba(255,255,255,0.06);
+  --clr-glass:     rgba(255,255,255,0.055);
   --clr-glass-hov: rgba(255,255,255,0.10);
   --clr-border:    rgba(255,255,255,0.10);
   --clr-accent:    #6c63ff;
   --clr-accent2:   #ff6584;
+  --clr-accent3:   #43e97b;
   --clr-spotify:   #1DB954;
   --clr-text:      #e8eaf0;
   --clr-text-dim:  rgba(232,234,240,0.55);
@@ -49,85 +50,93 @@ button { font-family: inherit; cursor: none; }
 }
 
 /* =========================================================
+   INTRO / THREE.JS LOADING SCREEN
+   ========================================================= */
+#introScreen {
+  position: fixed; inset: 0; z-index: 1000;
+  background: var(--clr-bg);
+  display: flex; align-items: center; justify-content: center;
+}
+#introCanvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+}
+.intro-content {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  text-align: center;
+}
+.intro-logo {
+  font-size: clamp(3rem, 10vw, 6rem);
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2), var(--clr-accent3));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  animation: introGlow 2s ease-in-out infinite alternate;
+}
+@keyframes introGlow {
+  from { filter: drop-shadow(0 0 20px rgba(108,99,255,0.6)); }
+  to   { filter: drop-shadow(0 0 40px rgba(255,101,132,0.6)); }
+}
+.intro-tagline {
+  font-size: 0.9rem;
+  letter-spacing: 0.3em;
+  color: var(--clr-text-dim);
+  text-transform: uppercase;
+}
+.intro-bar {
+  width: 200px; height: 2px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 100px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.intro-bar-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--clr-accent), var(--clr-accent2));
+  border-radius: 100px;
+  transition: width 0.1s linear;
+}
+
+/* =========================================================
+   SMOKE TRAIL
+   ========================================================= */
+#smokeTrail {
+  position: fixed; inset: 0; z-index: 9998;
+  pointer-events: none; overflow: hidden;
+}
+.smoke-particle {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+}
+
+/* =========================================================
    BACKGROUND
    ========================================================= */
 .bg-canvas {
   position: fixed; inset: 0; z-index: 0;
   pointer-events: none; overflow: hidden;
-}
-
-.orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.35;
-  animation: orbFloat 20s ease-in-out infinite alternate;
-}
-.orb-1 {
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, #6c63ff, transparent 70%);
-  top: -200px; left: -200px;
-  animation-duration: 18s;
-}
-.orb-2 {
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, #ff6584, transparent 70%);
-  bottom: -150px; right: -150px;
-  animation-duration: 22s;
-  animation-delay: -8s;
-}
-.orb-3 {
-  width: 400px; height: 400px;
-  background: radial-gradient(circle, #43e97b, transparent 70%);
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  animation-duration: 25s;
-  animation-delay: -14s;
-}
-
-@keyframes orbFloat {
-  0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(40px, 30px) scale(1.05); }
-  100% { transform: translate(-30px, 50px) scale(0.95); }
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(108,99,255,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 80%, rgba(255,101,132,0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(67,233,123,0.06) 0%, transparent 60%);
 }
 
 /* Particle canvas */
 .particle-field { position: absolute; inset: 0; }
 
 /* =========================================================
-   CUSTOM CURSOR
-   ========================================================= */
-.cursor-dot, .cursor-ring {
-  position: fixed;
-  pointer-events: none;
-  z-index: 9999;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.2s;
-}
-.cursor-dot {
-  width: 8px; height: 8px;
-  background: var(--clr-accent);
-  top: 0; left: 0;
-}
-.cursor-ring {
-  width: 36px; height: 36px;
-  border: 2px solid rgba(108,99,255,0.6);
-  top: 0; left: 0;
-  transition: width 0.2s, height 0.2s, border-color 0.2s;
-}
-.cursor-ring.hover {
-  width: 56px; height: 56px;
-  border-color: var(--clr-accent);
-}
-
-/* =========================================================
    GLASS UTILITY
    ========================================================= */
 .glass {
   background: var(--clr-glass);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius-lg);
 }
@@ -149,22 +158,27 @@ button { font-family: inherit; cursor: none; }
 .header-inner {
   width: 100%; display: flex;
   align-items: center; justify-content: space-between;
-  max-width: 1200px; margin: 0 auto;
+  max-width: 1300px; margin: 0 auto;
 }
 .logo {
   display: flex; align-items: center; gap: 10px;
   font-weight: 800; font-size: 1.3rem;
   letter-spacing: 0.15em;
 }
-.logo-icon { font-size: 1.5rem; }
+.logo-icon-svg {
+  width: 22px; height: 22px;
+  stroke: var(--clr-accent);
+  flex-shrink: 0;
+}
 .logo-text {
   background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .mode-nav { display: flex; gap: 6px; }
 .nav-btn {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 7px;
   padding: 8px 16px;
   border: 1px solid transparent;
   border-radius: 100px;
@@ -185,7 +199,11 @@ button { font-family: inherit; cursor: none; }
   color: var(--clr-white);
   border-color: rgba(108,99,255,0.4);
 }
-.nav-icon { font-size: 1rem; }
+.nav-icon-svg {
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
 
 .header-actions { display: flex; gap: 8px; }
 .icon-btn {
@@ -195,9 +213,9 @@ button { font-family: inherit; cursor: none; }
   border-radius: 50%;
   background: transparent;
   color: var(--clr-text-dim);
-  font-size: 1.1rem;
   transition: var(--transition);
 }
+.icon-btn svg { width: 17px; height: 17px; stroke: currentColor; }
 .icon-btn:hover {
   background: var(--clr-glass-hov);
   color: var(--clr-text);
@@ -216,88 +234,91 @@ button { font-family: inherit; cursor: none; }
 .hero-content {
   display: flex; flex-direction: column;
   align-items: center; gap: 40px;
-  width: 100%; max-width: 600px;
+  width: 100%; max-width: 680px;
 }
 
-/* Ring */
-.timer-ring-wrap {
-  position: relative;
-  width: 300px; height: 300px;
-  flex-shrink: 0;
-}
-.timer-ring-svg {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  transform: rotate(-90deg);
-}
-.ring-track {
-  fill: none;
-  stroke: rgba(255,255,255,0.06);
-  stroke-width: 8;
-}
-.ring-progress {
-  fill: none;
-  stroke: url(#ringGrad);
-  stroke-width: 8;
-  stroke-linecap: round;
-  stroke-dasharray: 816.81; /* 2π × 130 */
-  stroke-dashoffset: 0;
-  transition: stroke-dashoffset 1s linear;
-  filter: drop-shadow(0 0 8px rgba(108,99,255,0.7));
+/* Timer display wrap — no ring, just display */
+.timer-display-wrap {
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center;
 }
 
-/* Inject gradient via JS or inline SVG defs */
-.timer-ring-svg defs { display: none; }
-
-.timer-face {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-}
 .mode-display {
   display: flex; flex-direction: column;
-  align-items: center; gap: 8px;
+  align-items: center; gap: 16px;
   text-align: center;
+  width: 100%;
 }
 .mode-display.hidden { display: none; }
 
+.mode-label-top {
+  font-size: 0.65rem;
+  letter-spacing: 0.35em;
+  color: var(--clr-text-dim);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: -8px;
+}
+
 .time-digits {
   font-family: var(--font-mono);
-  font-size: clamp(2rem, 7vw, 3rem);
+  font-size: clamp(3.5rem, 14vw, 6rem);
   font-weight: 700;
   color: var(--clr-white);
-  letter-spacing: 0.05em;
-  text-shadow: 0 0 30px rgba(108,99,255,0.5);
+  letter-spacing: 0.04em;
+  text-shadow:
+    0 0 40px rgba(108,99,255,0.45),
+    0 0 80px rgba(108,99,255,0.15);
   line-height: 1;
+  white-space: nowrap;
 }
-.mode-label {
-  font-size: 0.65rem;
-  letter-spacing: 0.25em;
-  color: var(--clr-text-dim);
-  font-weight: 600;
-}
+
 .clock-date {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--clr-text-dim);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  margin-top: -4px;
 }
+
 .pomodoro-phase-badge {
   font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.2em;
-  padding: 3px 12px;
+  letter-spacing: 0.25em;
+  padding: 4px 16px;
   border-radius: 100px;
   background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
   color: white;
 }
-.pomodoro-progress {
-  font-size: 0.72rem;
+.pomodoro-cycles {
+  font-size: 0.78rem;
   color: var(--clr-text-dim);
+  letter-spacing: 0.05em;
+  margin-top: -4px;
+}
+
+/* Progress bar (replaces ring) */
+.timer-progress-wrap {
+  width: 100%;
+  padding: 0 4px;
+}
+.timer-progress-bar {
+  width: 100%; height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.timer-progress-fill {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, var(--clr-accent), var(--clr-accent2));
+  border-radius: 100px;
+  transition: width 1s linear;
+  box-shadow: 0 0 12px rgba(108,99,255,0.6);
 }
 
 /* Controls bar */
 .controls-bar {
   width: 100%;
-  padding: 20px 24px;
+  padding: 22px 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -313,14 +334,14 @@ button { font-family: inherit; cursor: none; }
   font-size: 0.85rem; color: var(--clr-text-dim);
 }
 .input-group input {
-  width: 64px;
+  width: 68px;
   padding: 10px 12px;
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--clr-border);
   border-radius: var(--radius-sm);
   color: var(--clr-text);
   font-family: var(--font-mono);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   text-align: center;
   transition: var(--transition);
   appearance: textfield;
@@ -335,45 +356,46 @@ button { font-family: inherit; cursor: none; }
 
 /* Playback buttons */
 .playback-btns {
-  display: flex; gap: 16px; align-items: center;
+  display: flex; gap: 20px; align-items: center;
 }
 .ctrl-btn {
   display: flex; align-items: center; justify-content: center;
   border: none;
   border-radius: 50%;
-  font-size: 1.1rem;
   transition: var(--transition);
 }
+.ctrl-btn svg { pointer-events: none; }
 .ctrl-play {
-  width: 64px; height: 64px;
+  width: 68px; height: 68px;
   background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
   color: white;
-  font-size: 1.4rem;
-  box-shadow: 0 8px 30px rgba(108,99,255,0.4);
+  box-shadow: 0 8px 32px rgba(108,99,255,0.45);
 }
+.ctrl-play svg { width: 22px; height: 22px; }
 .ctrl-play:hover {
   transform: scale(1.08);
-  box-shadow: 0 12px 40px rgba(108,99,255,0.6);
+  box-shadow: 0 12px 44px rgba(108,99,255,0.65);
 }
 .ctrl-reset, .ctrl-stop {
-  width: 48px; height: 48px;
+  width: 50px; height: 50px;
   background: var(--clr-glass);
   color: var(--clr-text-dim);
   border: 1px solid var(--clr-border);
 }
+.ctrl-reset svg, .ctrl-stop svg { width: 18px; height: 18px; }
 .ctrl-reset:hover, .ctrl-stop:hover {
   background: var(--clr-glass-hov);
   color: var(--clr-text);
   border-color: var(--clr-accent);
 }
-.ctrl-btn:active { transform: scale(0.94); }
+.ctrl-btn:active { transform: scale(0.93); }
 
 /* Completion banner */
 .completion-banner {
   position: fixed; inset: 0; z-index: 200;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(8, 11, 18, 0.85);
-  backdrop-filter: blur(10px);
+  background: rgba(8, 11, 18, 0.88);
+  backdrop-filter: blur(12px);
 }
 .completion-banner.hidden { display: none; }
 .completion-inner {
@@ -383,16 +405,252 @@ button { font-family: inherit; cursor: none; }
   background: var(--clr-glass);
   border: 1px solid var(--clr-border);
   box-shadow: var(--shadow-glow);
+  cursor: none;
 }
-.completion-emoji { font-size: 4rem; animation: pulse 1s ease-in-out infinite; }
+.completion-icon {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
+  display: flex; align-items: center; justify-content: center;
+  animation: completionPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 0 40px rgba(108,99,255,0.5);
+}
+.completion-icon svg {
+  width: 36px; height: 36px;
+  stroke: white; stroke-width: 3;
+}
+@keyframes completionPop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
 .completion-text {
-  font-size: 2.5rem; font-weight: 900;
+  font-size: 2.8rem; font-weight: 900;
   background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.05em;
 }
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+.completion-sub {
+  font-size: 0.9rem;
+  color: var(--clr-text-dim);
+  letter-spacing: 0.1em;
+}
+
+/* =========================================================
+   PANELS SECTION (Spotify + World Clocks side by side)
+   ========================================================= */
+.panels-section {
+  position: relative; z-index: 1;
+  padding: 0 2rem 80px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+.panels-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Panel block */
+.panel-block {
+  padding: 28px;
+}
+.panel-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--clr-text-dim);
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--clr-border);
+}
+.panel-title svg { flex-shrink: 0; }
+
+/* =========================================================
+   SPOTIFY WIDGET
+   ========================================================= */
+.spotify-panel { position: relative; overflow: hidden; }
+
+.spotify-auth {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 16px;
+  padding: 16px 8px 8px;
+  text-align: center;
+}
+.spotify-logo { margin-bottom: 4px; }
+.spotify-auth p {
+  font-size: 0.88rem;
+  color: var(--clr-text-dim);
+  line-height: 1.5;
+}
+
+.btn-spotify {
+  padding: 11px 28px;
+  border: none;
+  border-radius: 100px;
+  background: var(--clr-spotify);
+  color: black;
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0.05em;
+  transition: var(--transition);
+}
+.btn-spotify:hover {
+  transform: scale(1.04);
+  box-shadow: 0 6px 24px rgba(29,185,84,0.4);
+}
+
+.spotify-player { display: flex; flex-direction: column; gap: 16px; }
+.spotify-player.hidden { display: none; }
+
+.now-playing-art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.now-playing-art img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+.art-glow {
+  position: absolute; inset: 0;
+  opacity: 0.3;
+  filter: blur(20px);
+  z-index: -1;
+}
+
+.now-playing-info { display: flex; flex-direction: column; gap: 4px; }
+.track-name {
+  font-weight: 700; font-size: 1rem;
+  color: var(--clr-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.artist-name {
+  font-size: 0.85rem;
+  color: var(--clr-text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.album-name {
+  font-size: 0.78rem;
+  color: rgba(232,234,240,0.35);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.progress-bar-wrap {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 8px;
+}
+.progress-time { font-size: 0.75rem; color: var(--clr-text-dim); font-family: var(--font-mono); }
+.progress-bar {
+  flex: 1; height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 100px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; width: 0;
+  background: var(--clr-spotify);
+  border-radius: 100px;
+  transition: width 1s linear;
+}
+
+.spotify-controls {
+  display: flex; align-items: center; justify-content: center; gap: 20px;
+}
+.sp-btn {
+  width: 42px; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  color: var(--clr-text-dim);
+  transition: var(--transition);
+  border: 1px solid var(--clr-border);
+}
+.sp-btn svg { width: 16px; height: 16px; }
+.sp-btn:hover { background: var(--clr-glass-hov); color: var(--clr-text); border-color: var(--clr-accent); }
+.sp-play {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
+  color: white; border-color: transparent;
+}
+.sp-play svg { width: 20px; height: 20px; }
+.sp-play:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 24px rgba(108,99,255,0.45);
+  border-color: transparent;
+}
+.sp-disconnect {
+  padding: 7px 16px;
+  border: 1px solid var(--clr-border);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--clr-text-dim);
+  font-size: 0.8rem;
+  transition: var(--transition);
+  align-self: center;
+}
+.sp-disconnect:hover { background: rgba(255,101,132,0.1); border-color: var(--clr-accent2); color: var(--clr-accent2); }
+
+/* =========================================================
+   WORLD CLOCKS
+   ========================================================= */
+.worldclocks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+}
+.clock-card {
+  padding: 18px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  display: flex; flex-direction: column; gap: 6px;
+  transition: var(--transition);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.clock-card:hover {
+  background: var(--clr-glass-hov);
+  border-color: rgba(108,99,255,0.35);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(108,99,255,0.15);
+}
+.clock-region {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--clr-accent);
+  line-height: 1;
+}
+.clock-city {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--clr-text);
+  line-height: 1.2;
+}
+.clock-time {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--clr-white);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 20px rgba(108,99,255,0.4);
+}
+.clock-tz {
+  font-size: 0.7rem;
+  color: var(--clr-text-dim);
+  letter-spacing: 0.08em;
+}
+.clock-date-small {
+  font-size: 0.7rem;
+  color: rgba(232,234,240,0.35);
+  letter-spacing: 0.03em;
 }
 
 /* =========================================================
@@ -400,14 +658,14 @@ button { font-family: inherit; cursor: none; }
    ========================================================= */
 .settings-overlay {
   position: fixed; inset: 0; z-index: 150;
-  background: rgba(8,11,18,0.7);
-  backdrop-filter: blur(8px);
+  background: rgba(8,11,18,0.75);
+  backdrop-filter: blur(10px);
   display: flex; align-items: center; justify-content: center;
 }
 .settings-overlay.hidden { display: none; }
 .settings-panel {
   width: 100%; max-width: 480px;
-  max-height: 85vh;
+  max-height: 88vh;
   overflow-y: auto;
   padding: 0;
 }
@@ -416,32 +674,32 @@ button { font-family: inherit; cursor: none; }
   padding: 20px 28px;
   border-bottom: 1px solid var(--clr-border);
   position: sticky; top: 0;
-  background: rgba(8,11,18,0.9);
-  backdrop-filter: blur(10px);
+  background: rgba(8,11,18,0.92);
+  backdrop-filter: blur(12px);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 .panel-header h2 {
-  font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em;
+  font-size: 1.1rem; font-weight: 700; letter-spacing: 0.06em;
 }
 .close-btn {
   width: 32px; height: 32px;
   display: flex; align-items: center; justify-content: center;
   border: 1px solid var(--clr-border); border-radius: 50%;
   background: transparent; color: var(--clr-text-dim);
-  font-size: 0.9rem;
   transition: var(--transition);
 }
+.close-btn svg { width: 14px; height: 14px; }
 .close-btn:hover { background: var(--clr-glass-hov); color: var(--clr-text); }
 .panel-body { padding: 24px 28px; display: flex; flex-direction: column; gap: 28px; }
 
 .setting-group h3 {
-  font-size: 0.75rem; letter-spacing: 0.18em; font-weight: 600;
+  font-size: 0.7rem; letter-spacing: 0.2em; font-weight: 700;
   color: var(--clr-accent); text-transform: uppercase;
   margin-bottom: 14px;
 }
 .setting-row {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; padding: 8px 0;
+  gap: 12px; padding: 9px 0;
   font-size: 0.9rem; color: var(--clr-text-dim);
   border-bottom: 1px solid rgba(255,255,255,0.04);
 }
@@ -498,306 +756,82 @@ button { font-family: inherit; cursor: none; }
   border: none;
   border-radius: var(--radius-sm);
   background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent2));
-  color: white; font-weight: 600; font-size: 0.9rem;
-  margin-top: 8px;
-  transition: var(--transition);
-}
-.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-
-/* =========================================================
-   SECTION BLOCKS
-   ========================================================= */
-.section-block {
-  position: relative; z-index: 1;
-  padding: 80px 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-.section-header { margin-bottom: 40px; text-align: center; }
-.section-title {
-  font-size: clamp(1.6rem, 4vw, 2.4rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  display: flex; align-items: center; justify-content: center; gap: 12px;
-}
-.section-icon { font-size: 1.3em; }
-
-/* =========================================================
-   SPOTIFY WIDGET
-   ========================================================= */
-.spotify-widget {
-  max-width: 700px; margin: 0 auto;
-  padding: 36px;
-  transition: var(--transition);
-}
-.spotify-widget:hover {
-  background: var(--clr-glass-hov);
-  box-shadow: 0 20px 60px rgba(29,185,84,0.12);
-}
-
-/* Auth state */
-.spotify-auth {
-  display: flex; flex-direction: column;
-  align-items: center; gap: 20px;
-  text-align: center; padding: 20px 0;
-}
-.spotify-auth p { color: var(--clr-text-dim); }
-.btn-spotify {
-  padding: 12px 32px;
-  border: none; border-radius: 100px;
-  background: var(--clr-spotify);
-  color: #000; font-weight: 700; font-size: 0.95rem;
+  color: white;
+  font-weight: 600;
+  font-size: 0.88rem;
   letter-spacing: 0.04em;
   transition: var(--transition);
-  box-shadow: 0 8px 30px rgba(29,185,84,0.35);
 }
-.btn-spotify:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(29,185,84,0.5);
-}
-
-/* Player state */
-.spotify-player {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto auto;
-  gap: 20px;
-  align-items: start;
-}
-.spotify-player.hidden { display: none; }
-
-.now-playing-art {
-  position: relative;
-  grid-row: span 2;
-  width: 120px; height: 120px;
-  border-radius: var(--radius-md);
-  overflow: visible;
-  flex-shrink: 0;
-}
-.now-playing-art img {
-  width: 120px; height: 120px;
-  border-radius: var(--radius-md);
-  object-fit: cover;
-  position: relative; z-index: 1;
-}
-.art-glow {
-  position: absolute;
-  inset: -8px;
-  border-radius: 20px;
-  filter: blur(20px);
-  opacity: 0.5;
-  background: var(--clr-spotify);
-  z-index: 0;
-}
-
-.now-playing-info { min-width: 0; }
-.track-name {
-  font-size: 1.1rem; font-weight: 700;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  margin-bottom: 4px;
-}
-.artist-name { color: var(--clr-text-dim); font-size: 0.9rem; margin-bottom: 2px; }
-.album-name  { color: var(--clr-text-dim); font-size: 0.8rem; margin-bottom: 12px; }
-
-.progress-bar-wrap {
-  display: flex; align-items: center; gap: 8px;
-}
-.progress-time { font-size: 0.75rem; color: var(--clr-text-dim); width: 36px; flex-shrink: 0; }
-.progress-bar {
-  flex: 1; height: 4px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 100px; overflow: hidden;
-}
-.progress-fill {
-  height: 100%;
-  background: var(--clr-spotify);
-  border-radius: 100px;
-  width: 0%;
-  transition: width 1s linear;
-}
-
-.spotify-controls {
-  grid-column: span 2;
-  display: flex; align-items: center; justify-content: center; gap: 20px;
-}
-.sp-btn {
-  width: 44px; height: 44px;
-  display: flex; align-items: center; justify-content: center;
-  border: 1px solid var(--clr-border);
-  border-radius: 50%;
-  background: transparent;
-  color: var(--clr-text-dim);
-  font-size: 1.2rem;
-  transition: var(--transition);
-}
-.sp-btn:hover {
-  background: var(--clr-glass-hov);
-  color: var(--clr-text);
-  border-color: var(--clr-spotify);
-}
-.sp-play {
-  width: 56px; height: 56px;
-  background: var(--clr-spotify);
-  color: #000; font-size: 1.4rem;
-  border-color: var(--clr-spotify);
-  box-shadow: 0 6px 24px rgba(29,185,84,0.3);
-}
-.sp-play:hover {
-  transform: scale(1.08);
-  box-shadow: 0 10px 32px rgba(29,185,84,0.5);
-}
-.sp-disconnect {
-  grid-column: span 2;
-  background: none; border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 100px;
-  color: var(--clr-text-dim); font-size: 0.8rem;
-  padding: 6px 18px;
-  align-self: center; justify-self: center;
-  transition: var(--transition);
-}
-.sp-disconnect:hover {
-  border-color: var(--clr-accent2);
-  color: var(--clr-accent2);
-}
-
-/* =========================================================
-   WORLD CLOCKS
-   ========================================================= */
-.worldclocks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
-}
-.clock-card {
-  padding: 24px 20px;
-  border-radius: var(--radius-md);
-  background: var(--clr-glass);
-  border: 1px solid var(--clr-border);
-  text-align: center;
-  transition: var(--transition);
-  position: relative; overflow: hidden;
-}
-.clock-card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--clr-accent), var(--clr-accent2));
-  opacity: 0;
-  transition: var(--transition);
-}
-.clock-card:hover {
-  background: var(--clr-glass-hov);
-  transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(108,99,255,0.15);
-}
-.clock-card:hover::before { opacity: 1; }
-
-.clock-city {
-  font-size: 0.7rem; letter-spacing: 0.2em; font-weight: 700;
-  color: var(--clr-accent); text-transform: uppercase; margin-bottom: 8px;
-}
-.clock-time {
-  font-family: var(--font-mono);
-  font-size: 1.5rem; font-weight: 700;
-  color: var(--clr-white); letter-spacing: 0.04em;
-  margin-bottom: 4px;
-}
-.clock-tz {
-  font-size: 0.72rem; color: var(--clr-text-dim);
-}
-.clock-date-small {
-  font-size: 0.72rem; color: var(--clr-text-dim); margin-top: 2px;
+.btn-primary:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 24px rgba(108,99,255,0.4);
 }
 
 /* =========================================================
    FOOTER
    ========================================================= */
 .site-footer {
-  margin: 40px 2rem;
-  padding: 20px 32px;
-  display: flex; align-items: center; justify-content: center;
-  gap: 0;
-  flex-wrap: wrap;
-  text-align: center;
-  font-size: 0.85rem;
-  color: var(--clr-text-dim);
-  border-radius: var(--radius-md);
+  position: relative; z-index: 1;
+  border-radius: 0;
+  border-left: 0; border-right: 0; border-bottom: 0;
+  padding: 20px 2rem;
 }
-.footer-sep { margin: 0 12px; opacity: 0.4; }
-.footer-link { color: var(--clr-accent); transition: var(--transition); }
-.footer-link:hover { color: var(--clr-white); }
+.footer-inner {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; flex-wrap: wrap;
+  max-width: 1300px; margin: 0 auto;
+  font-size: 0.82rem;
+  color: var(--clr-text-dim);
+}
+.footer-sep { opacity: 0.3; }
+.footer-link:hover { color: var(--clr-accent); }
 
 /* =========================================================
-   SCROLL ANIMATIONS (initial hidden states)
+   SCROLL ANIMATIONS (initial state)
    ========================================================= */
-.section-block { opacity: 0; transform: translateY(40px); }
+#panelsSection {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+/* =========================================================
+   TIMER ACTIVE STATE
+   ========================================================= */
+.timer-display-wrap.timer-active .time-digits {
+  text-shadow:
+    0 0 40px rgba(108,99,255,0.7),
+    0 0 80px rgba(108,99,255,0.3),
+    0 0 120px rgba(108,99,255,0.1);
+  animation: digitPulse 2s ease-in-out infinite alternate;
+}
+@keyframes digitPulse {
+  from { opacity: 1; }
+  to   { opacity: 0.85; }
+}
+.timer-progress-fill.active {
+  box-shadow: 0 0 20px rgba(108,99,255,0.8), 0 0 40px rgba(108,99,255,0.4);
+}
 
 /* =========================================================
    RESPONSIVE
    ========================================================= */
-@media (max-width: 768px) {
-  .site-header { padding: 0 1rem; }
-  .nav-label { display: none; }
-  .nav-btn { padding: 8px 10px; }
-  .logo-text { display: none; }
-
-  .hero-section { padding: 90px 1rem 50px; }
-  .timer-ring-wrap { width: 240px; height: 240px; }
-  .time-digits { font-size: clamp(1.6rem, 8vw, 2.2rem); }
-
-  .spotify-player {
+@media (max-width: 900px) {
+  .panels-grid {
     grid-template-columns: 1fr;
   }
-  .now-playing-art {
-    grid-row: unset;
-    margin: 0 auto;
+  .worldclocks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
-  .spotify-controls { grid-column: 1; }
-  .sp-disconnect { grid-column: 1; }
-
-  .section-block { padding: 60px 1rem; }
-  .worldclocks-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-
-  .controls-bar { padding: 16px; }
-  .timer-inputs { gap: 8px; }
-  .input-group input { width: 52px; }
-
-  /* Desktop cursor hidden on touch */
-  .cursor-dot, .cursor-ring { display: none; }
-  body { cursor: auto; }
-  button { cursor: pointer; }
 }
-
-@media (max-width: 480px) {
-  .timer-ring-wrap { width: 200px; height: 200px; }
-  .settings-panel { margin: 1rem; border-radius: var(--radius-md); }
-}
-
-/* =========================================================
-   ANIMATIONS
-   ========================================================= */
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
-/* Timer active state pulse */
-.timer-active .ring-progress {
-  filter: drop-shadow(0 0 12px rgba(108,99,255,0.9));
-}
-.timer-active .time-digits {
-  animation: digitGlow 2s ease-in-out infinite alternate;
-}
-@keyframes digitGlow {
-  from { text-shadow: 0 0 20px rgba(108,99,255,0.4); }
-  to   { text-shadow: 0 0 40px rgba(108,99,255,0.8); }
-}
-
-/* Completion flash */
-@keyframes completionFlash {
-  0%, 100% { background: rgba(8,11,18,0.85); }
-  50% { background: rgba(108,99,255,0.2); }
-}
-.completion-banner:not(.hidden) {
-  animation: completionFlash 0.5s ease 2;
+@media (max-width: 640px) {
+  .header-inner { gap: 8px; }
+  .mode-nav .nav-label { display: none; }
+  .nav-btn { padding: 8px 10px; }
+  .hero-section { padding: 90px 1.5rem 40px; }
+  .panels-section { padding: 0 1rem 60px; }
+  .time-digits { font-size: clamp(2.8rem, 18vw, 5rem); }
+  .panel-block { padding: 20px 16px; }
+  .worldclocks-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .completion-inner { padding: 40px 32px; }
+  .completion-text { font-size: 2rem; }
 }
