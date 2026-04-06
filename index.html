@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TIMEX — Premium Timer</title>
+  <title>CHRONOS — Premium Timer</title>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,7 +15,7 @@
   <div id="introScreen">
     <canvas id="introCanvas"></canvas>
     <div class="intro-content">
-      <div class="intro-logo">TIMEX</div>
+      <div class="intro-logo">CHRONOS</div>
       <div class="intro-tagline">Premium Timer Experience</div>
       <div class="intro-bar"><div class="intro-bar-fill" id="introBarFill"></div></div>
     </div>
@@ -26,6 +26,9 @@
 
   <!-- Animated background -->
   <div class="bg-canvas" id="bgCanvas">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
     <div class="particle-field" id="particleField"></div>
   </div>
 
@@ -37,7 +40,7 @@
           <circle cx="12" cy="12" r="10"/>
           <polyline points="12 6 12 12 16 14"/>
         </svg>
-        <span class="logo-text">TIMEX</span>
+        <span class="logo-text">CHRONOS</span>
       </div>
       <nav class="mode-nav">
         <button class="nav-btn active" data-mode="timer" aria-label="Custom Timer">
@@ -64,6 +67,26 @@
       </div>
     </div>
   </header>
+
+  <!-- ===================== WORLD CLOCKS TICKER ===================== -->
+  <div class="clock-ticker-section" id="clockTickerSection">
+    <div class="clock-ticker-wrap">
+      <div class="clock-ticker" id="clockTicker">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TIMEZONE SEARCH ===================== -->
+  <div class="tz-search-section" id="tzSearchSection">
+    <div class="tz-search-wrap">
+      <div class="tz-search-inner">
+        <svg class="tz-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="tzSearchInput" placeholder="Search any city or country..." autocomplete="off" spellcheck="false" aria-label="Search timezone" aria-autocomplete="list" aria-haspopup="listbox" />
+        <div class="tz-search-results hidden" id="tzSearchResults" role="listbox"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===================== MAIN ===================== -->
   <main>
@@ -214,7 +237,7 @@
           </div>
         </div>
 
-        <!-- ===================== WORLD CLOCKS ===================== -->
+        <!-- ===================== WORLD CLOCKS GRID ===================== -->
         <div class="panel-block worldclocks-panel glass" id="worldClocksSection">
           <div class="panel-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
@@ -231,7 +254,7 @@
     <!-- ===================== FOOTER ===================== -->
     <footer class="site-footer glass">
       <div class="footer-inner">
-        <span>TIMEX — Premium Timer Experience</span>
+        <span>CHRONOS — Premium Timer Experience</span>
         <span class="footer-sep">·</span>
         <a href="SETUP.md" class="footer-link">Setup Guide</a>
         <span class="footer-sep">·</span>
@@ -309,6 +332,8 @@
   <div aria-live="polite" id="liveRegion" class="sr-only"></div>
 
   <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
     integrity="sha512-7eHRwcbYkK4d9d/6tD8X8U9KB9TbMkByBFnELg/4Cf9ORhvf1y7qqaAggr35r14e3y/gBLmX8yYfqZPjD4ibA=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
