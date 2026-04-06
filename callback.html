@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connecting Spotify…</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: #080b12;
+      color: #e8eaf0;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+    }
+    .card {
+      text-align: center;
+      padding: 48px 56px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px);
+      max-width: 400px;
+    }
+    .icon { font-size: 3rem; margin-bottom: 16px; }
+    h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
+    p  { font-size: 0.9rem; color: rgba(232,234,240,0.6); }
+    .error { color: #ff6584; }
+    .progress {
+      width: 48px; height: 48px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: #6c63ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="progress" id="progress"></div>
+    <h1 id="heading">Connecting to Spotify…</h1>
+    <p id="message">Please wait while we complete authentication.</p>
+  </div>
+
+  <script>
+    (function () {
+      const params   = new URLSearchParams(window.location.search);
+      const code     = params.get('code');
+      const error    = params.get('error');
+      const heading  = document.getElementById('heading');
+      const message  = document.getElementById('message');
+      const progress = document.getElementById('progress');
+
+      function setError(msg) {
+        progress.style.display = 'none';
+        document.getElementById('card').insertAdjacentHTML('afterbegin', '<div class="icon">❌</div>');
+        heading.textContent = 'Authentication Failed';
+        message.textContent = msg;
+        message.classList.add('error');
+        setTimeout(() => { window.location.href = 'index.html'; }, 4000);
+      }
+
+      function setSuccess() {
+        progress.style.display = 'none';
+        document.getElementById('card').insertAdjacentHTML('afterbegin', '<div class="icon">✅</div>');
+        heading.textContent = 'Connected!';
+        message.textContent = 'Spotify is now linked. Redirecting you back…';
+      }
+
+      if (error) {
+        setError('Spotify returned: ' + error);
+        return;
+      }
+
+      if (!code) {
+        setError('No authorization code received. Please try again.');
+        return;
+      }
+
+      // Store code in sessionStorage for main app to consume
+      try { sessionStorage.setItem('spotify_code', code); } catch (e) { /* */ }
+
+      setSuccess();
+      // Redirect back to main page
+      setTimeout(() => { window.location.href = 'index.html'; }, 1500);
+    })();
+  </script>
+</body>
+</html>
