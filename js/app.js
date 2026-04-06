@@ -424,8 +424,9 @@
     resize();
     window.addEventListener('resize', resize);
 
-    const GRAIN_COUNT = window.innerWidth < 600 ? 180 : 380;
-    const grains = Array.from({ length: GRAIN_COUNT }, () => ({
+    const MAX_GRAINS = 380;
+    const MIN_GRAINS = 180;
+    const grains = Array.from({ length: MAX_GRAINS }, () => ({
       x:  Math.random() * window.innerWidth,
       y:  Math.random() * window.innerHeight,
       vx: (Math.random() - 0.5) * 0.35,
@@ -438,7 +439,8 @@
     function draw() {
       if (!active) return;
       ctx.clearRect(0, 0, W, H);
-      grains.forEach(g => {
+      const count = W < 600 ? MIN_GRAINS : MAX_GRAINS;
+      grains.slice(0, count).forEach(g => {
         g.x  += g.vx;
         g.y  += g.vy;
         g.vx += (Math.random() - 0.5) * 0.018;

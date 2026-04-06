@@ -173,7 +173,7 @@
     inputEl.addEventListener('input', () => {
       if (!running) return;
       const typed = inputEl.value;
-      // Live colour feedback on prompt text
+      // Live color feedback on prompt text
       let html = '';
       for (let i = 0; i < prompt.length; i++) {
         const ch = typed[i];
@@ -409,7 +409,7 @@
     function showResult() {
       qEl.textContent = `Game over! You scored ${score} / ${QUESTIONS_PER_ROUND}`;
       if (ansEl)  ansEl.innerHTML  = '';
-      if (feedEl) { feedEl.textContent = score >= 4 ? 'Excellent!' : score >= 2 ? 'Good effort!' : 'Keep practising!'; feedEl.className = 'trivia-feedback correct'; }
+      if (feedEl) { feedEl.textContent = score >= 4 ? 'Excellent!' : score >= 2 ? 'Good effort!' : 'Keep practicing!'; feedEl.className = 'trivia-feedback correct'; }
       if (progEl) progEl.textContent = `${score}/${QUESTIONS_PER_ROUND} correct`;
       startBtn.textContent = 'Play Again';
     }
